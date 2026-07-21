@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, Shield } from "lucide-react"
 
@@ -69,12 +70,12 @@ const Navbar1 = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
           >
-            <a
-              href="#"
+            <Link
+              to="/login"
               className="inline-flex items-center justify-center px-5 py-2 text-[13px] font-medium text-black bg-white rounded-full hover:bg-white/90 transition-all"
             >
               Login
-            </a>
+            </Link>
           </motion.div>
 
           {/* Mobile Menu Button */}
@@ -134,13 +135,13 @@ const Navbar1 = () => {
                 exit={{ opacity: 0, y: 20 }}
                 className="pt-8"
               >
-                <a
-                  href="#"
+                <Link
+                  to="/login"
                   className="inline-flex items-center justify-center w-full px-5 py-4 text-base font-medium text-black bg-white rounded-full hover:bg-white/90 transition-colors"
                   onClick={toggleMenu}
                 >
                   Login
-                </a>
+                </Link>
               </motion.div>
             </div>
           </motion.div>
