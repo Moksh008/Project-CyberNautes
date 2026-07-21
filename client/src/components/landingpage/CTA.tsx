@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { fadeUp } from './animations';
 import { Shield, ArrowRight } from 'lucide-react';
@@ -47,14 +48,15 @@ export const CTA = () => {
         </motion.p>
 
         <motion.div {...fadeUp(0.3)} className="flex flex-col sm:flex-row gap-3">
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.98 }}
-            className="bg-white text-black font-semibold rounded-full px-10 py-4 text-sm tracking-wide hover:shadow-lg hover:shadow-white/20 transition-all flex items-center gap-2 group"
-          >
-            Login
-            <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-          </motion.button>
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
+            <Link
+              to="/dashboard"
+              className="bg-white text-black font-semibold rounded-full px-10 py-4 text-sm tracking-wide hover:shadow-lg hover:shadow-white/20 transition-all flex items-center gap-2 group"
+            >
+              Get Started
+              <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+            </Link>
+          </motion.div>
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.98 }}
