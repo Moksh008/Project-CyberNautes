@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Search,
   ShieldCheck,
@@ -129,12 +129,15 @@ function NavItem({
   onSelect: (id: string) => void;
   level?: number;
 }) {
+  const navigate = useNavigate();
   const isActive = activeId === item.id;
   const hasChildren = !!item.children;
   const [isOpen, setIsOpen] = useState(false);
 
   const handleClick = () => {
-    if (hasChildren) {
+    if (item.id === 'logout') {
+      navigate('/');
+    } else if (hasChildren) {
       setIsOpen(!isOpen);
     } else {
       onSelect(item.id);
