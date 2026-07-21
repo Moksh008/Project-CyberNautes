@@ -63,3 +63,27 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+---
+
+## 5. Project Details: SentinelAI
+
+**Description:** AI-Powered Cyber Defense Twin that simulates attacks against a digital replica of infrastructure and automatically generates verifiable patches.
+
+**Core Architecture & Tech Stack:**
+- **Frontend:** React (TSX) + Tailwind CSS (Vercel par deployable)
+- **Backend:** FastAPI (Python)
+- **Databases:** PostgreSQL (Relational) + Neo4j (Knowledge Graph for mapping attack paths)
+- **AI Agents Engine:** LangGraph + Gemini / GPT Models (Red Team vs Blue Team agents)
+- **Authentication:** Firebase Auth
+- **Sandbox Environment:** Ephemeral Docker Containers (Lightweight Alpine Linux) for safely detonating exploits
+- **Offensive (Red Team) Tools:** Metasploit, Scapy, Exploit-DB, OWASP ZAP (Headless)
+- **Threat Intelligence:** CVE + MITRE ATT&CK mapping JSONs
+
+**Key Workflows:**
+1. Codebase/Infra (JSON) ingestion via GitHub or zip upload.
+2. Building a Digital Twin and constructing a Knowledge Graph in Neo4j.
+3. Red Team AI executes active attacks in a Micro-Sandbox (Docker).
+4. Blue Team AI generates remediation recommendations.
+5. User selects fixes, Remediation Agent applies them to the sandbox, Red Team verifies.
+6. Verified patches are outputted as Git Diffs, Bash scripts, or Ansible playbooks.
