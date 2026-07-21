@@ -1,5 +1,6 @@
 
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { fadeUp } from './animations';
 import { Shield, ChevronDown } from 'lucide-react';
 
@@ -43,13 +44,14 @@ export const Hero = () => {
           </motion.p>
 
           <motion.div {...fadeUp(0.45)} className="flex flex-col sm:flex-row gap-3">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-white text-black font-semibold rounded-full px-8 py-3.5 text-sm tracking-wide w-full sm:w-auto hover:shadow-lg hover:shadow-white/10 transition-shadow"
-            >
-              Login
-            </motion.button>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
+              <Link
+                to="/dashboard"
+                className="flex items-center justify-center bg-white text-black font-semibold rounded-full px-8 py-3.5 text-sm tracking-wide w-full sm:w-auto hover:shadow-lg hover:shadow-white/10 transition-shadow"
+              >
+                Get Started
+              </Link>
+            </motion.div>
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
