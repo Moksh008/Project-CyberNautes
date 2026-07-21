@@ -5,7 +5,7 @@
 | :--- | :--- |
 | **Frontend** | React (TSX) + Tailwind CSS (Vercel par deployable) |
 | **Backend** | FastAPI (Python) |
-| **Database & Graph** | PostgreSQL (Relational) + Neo4j (Knowledge Graph) |
+| **Database & Graph** | Firebase Firestore (NoSQL) + Neo4j (Knowledge Graph) |
 | **AI Agents Engine** | LangGraph + Gemini / GPT Models |
 | **Authentication** | Firebase Auth |
 | **Sandbox Environment** | Ephemeral Docker Containers (Lightweight Alpine Linux) |
