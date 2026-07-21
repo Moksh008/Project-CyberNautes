@@ -9,6 +9,16 @@ import { Eye, EyeOff } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { initFirebase } from "../../config/firebase";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  updateProfile, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  type Auth 
+} from "firebase/auth";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -180,60 +190,216 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
 );
 PasswordInput.displayName = "PasswordInput";
 
-function SignInForm() {
-  const handleSignIn = (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); console.log("UI: Sign In form submitted"); };
+interface FormProps {
+  auth: Auth;
+  onSuccess: () => void;
+}
+
+function SignInForm({ auth, onSuccess }: FormProps) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      onSuccess();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to sign in. Please check your credentials.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <form onSubmit={handleSignIn} autoComplete="on" className="flex flex-col gap-8">
+    <form onSubmit={handleSignIn} autoComplete="on" className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-bold">Sign in to your account</h1>
         <p className="text-balance text-sm text-muted-foreground">Enter your email below to sign in</p>
       </div>
+      {error && (
+        <div className="p-3 text-xs bg-destructive/10 border border-destructive/20 text-destructive rounded-lg">
+          {error.replace("Firebase:", "").trim()}
+        </div>
+      )}
       <div className="grid gap-4">
-        <div className="grid gap-2"><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" placeholder="m@example.com" required autoComplete="email" /></div>
-        <PasswordInput name="password" label="Password" required autoComplete="current-password" placeholder="Password" />
-        <Button type="submit" variant="outline" className="mt-2">Sign In</Button>
+        <div className="grid gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input 
+            id="email" 
+            name="email" 
+            type="email" 
+            placeholder="m@example.com" 
+            required 
+            autoComplete="email" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <PasswordInput 
+          name="password" 
+          label="Password" 
+          required 
+          autoComplete="current-password" 
+          placeholder="Password" 
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <Button type="submit" variant="outline" className="mt-2" disabled={loading}>
+          {loading ? "Signing In..." : "Sign In"}
+        </Button>
       </div>
     </form>
   );
 }
 
-function SignUpForm() {
-  const handleSignUp = (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); console.log("UI: Sign Up form submitted"); };
+function SignUpForm({ auth, onSuccess }: FormProps) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      if (userCredential.user) {
+        await updateProfile(userCredential.user, { displayName: name });
+      }
+      onSuccess();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to create account. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <form onSubmit={handleSignUp} autoComplete="on" className="flex flex-col gap-8">
+    <form onSubmit={handleSignUp} autoComplete="on" className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-bold">Create an account</h1>
         <p className="text-balance text-sm text-muted-foreground">Enter your details below to sign up</p>
       </div>
+      {error && (
+        <div className="p-3 text-xs bg-destructive/10 border border-destructive/20 text-destructive rounded-lg">
+          {error.replace("Firebase:", "").trim()}
+        </div>
+      )}
       <div className="grid gap-4">
-        <div className="grid gap-1"><Label htmlFor="name">Full Name</Label><Input id="name" name="name" type="text" placeholder="John Doe" required autoComplete="name" /></div>
-        <div className="grid gap-2"><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" placeholder="m@example.com" required autoComplete="email" /></div>
-        <PasswordInput name="password" label="Password" required autoComplete="new-password" placeholder="Password"/>
-        <Button type="submit" variant="outline" className="mt-2">Sign Up</Button>
+        <div className="grid gap-1">
+          <Label htmlFor="name">Full Name</Label>
+          <Input 
+            id="name" 
+            name="name" 
+            type="text" 
+            placeholder="John Doe" 
+            required 
+            autoComplete="name" 
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input 
+            id="email" 
+            name="email" 
+            type="email" 
+            placeholder="m@example.com" 
+            required 
+            autoComplete="email" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <PasswordInput 
+          name="password" 
+          label="Password" 
+          required 
+          autoComplete="new-password" 
+          placeholder="Password" 
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <Button type="submit" variant="outline" className="mt-2" disabled={loading}>
+          {loading ? "Signing Up..." : "Sign Up"}
+        </Button>
       </div>
     </form>
   );
 }
 
-function AuthFormContainer({ isSignIn, onToggle }: { isSignIn: boolean; onToggle: () => void; }) {
-    return (
-        <div className="mx-auto grid w-[350px] gap-2">
-            {isSignIn ? <SignInForm /> : <SignUpForm />}
-            <div className="text-center text-sm">
-                {isSignIn ? "Don't have an account?" : "Already have an account?"}{" "}
-                <Button variant="link" className="pl-1 text-foreground" onClick={onToggle}>
-                    {isSignIn ? "Sign up" : "Sign in"}
-                </Button>
-            </div>
-            <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-                <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
-            </div>
-            <Button variant="outline" type="button" onClick={() => console.log("UI: Google button clicked")}>
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google icon" className="mr-2 h-4 w-4" />
-                Continue with Google
-            </Button>
+function AuthFormContainer({ 
+  auth, 
+  isSignIn, 
+  onToggle, 
+  onSuccess 
+}: { 
+  auth: Auth; 
+  isSignIn: boolean; 
+  onToggle: () => void; 
+  onSuccess: () => void; 
+}) {
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setGoogleError(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      onSuccess();
+    } catch (err: any) {
+      console.error(err);
+      setGoogleError(err.message || "Google Sign-In failed.");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto grid w-[350px] gap-2">
+      {isSignIn ? (
+        <SignInForm auth={auth} onSuccess={onSuccess} />
+      ) : (
+        <SignUpForm auth={auth} onSuccess={onSuccess} />
+      )}
+      <div className="text-center text-sm">
+        {isSignIn ? "Don't have an account?" : "Already have an account?"}{" "}
+        <Button variant="link" className="pl-1 text-foreground" onClick={onToggle}>
+          {isSignIn ? "Sign up" : "Sign in"}
+        </Button>
+      </div>
+      {googleError && (
+        <div className="p-3 text-xs bg-destructive/10 border border-destructive/20 text-destructive rounded-lg">
+          {googleError.replace("Firebase:", "").trim()}
         </div>
-    )
+      )}
+      <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+        <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
+      </div>
+      <Button variant="outline" type="button" onClick={handleGoogleSignIn} disabled={googleLoading}>
+        {googleLoading ? (
+          "Connecting..."
+        ) : (
+          <>
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google icon" className="mr-2 h-4 w-4" />
+            Continue with Google
+          </>
+        )}
+      </Button>
+    </div>
+  );
 }
 
 interface AuthContentProps {
@@ -278,6 +444,36 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
   const [isSignIn, setIsSignIn] = useState(true);
   const toggleForm = () => setIsSignIn((prev) => !prev);
 
+  const [auth, setAuth] = useState<Auth | null>(null);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [configError, setConfigError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let active = true;
+    initFirebase()
+      .then((authInstance) => {
+        if (active) {
+          setAuth(authInstance);
+          setLoadingConfig(false);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          console.error("Firebase init error:", err);
+          setConfigError(err.message || "Could not connect to authentication gateway.");
+          setLoadingConfig(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleAuthSuccess = () => {
+    navigate("/dashboard");
+  };
+
   const finalSignInContent = {
       image: { ...defaultSignInContent.image, ...signInContent.image },
       quote: { ...defaultSignInContent.quote, ...signInContent.quote },
@@ -307,15 +503,38 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
   };
 
   return (
-    <div className="w-full min-h-screen md:grid md:grid-cols-2">
+    <div className="w-full min-h-screen md:grid md:grid-cols-2 bg-black">
       <style>{`
         input[type="password"]::-ms-reveal,
         input[type="password"]::-ms-clear {
           display: none;
         }
       `}</style>
-      <div className="flex h-screen items-center justify-center p-6 md:h-auto md:p-0 md:py-12">
-        <AuthFormContainer isSignIn={isSignIn} onToggle={toggleForm} />
+      <div className="flex h-screen items-center justify-center p-6 md:h-auto md:p-0 md:py-12 bg-black">
+        {loadingConfig ? (
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+            <p className="text-muted-foreground text-sm">Securing handshake with Sentinel gateway...</p>
+          </div>
+        ) : configError ? (
+          <div className="flex flex-col items-center gap-4 text-center max-w-sm px-4">
+            <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-full">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold">Gateway Connection Error</h2>
+            <p className="text-muted-foreground text-sm">{configError}</p>
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Retry Connection</Button>
+          </div>
+        ) : auth ? (
+          <AuthFormContainer 
+            auth={auth} 
+            isSignIn={isSignIn} 
+            onToggle={toggleForm} 
+            onSuccess={handleAuthSuccess} 
+          />
+        ) : null}
       </div>
 
       <motion.div

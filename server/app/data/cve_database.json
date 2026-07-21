@@ -1,0 +1,26 @@
+[
+  {
+    "software": "apache",
+    "version": "2.4.49",
+    "cve_id": "CVE-2021-41773",
+    "description": "Path traversal and remote code execution in Apache HTTP Server 2.4.49",
+    "severity": "critical",
+    "mitre_technique": { "id": "T1190", "name": "Exploit Public-Facing Application" }
+  },
+  {
+    "software": "openssl",
+    "version": "1.0.1",
+    "cve_id": "CVE-2014-0160",
+    "description": "Heartbleed: OpenSSL buffer over-read exposing memory contents",
+    "severity": "high",
+    "mitre_technique": { "id": "T1040", "name": "Network Sniffing" }
+  },
+  {
+    "software": "openssh",
+    "version": "8.5",
+    "cve_id": "CVE-2021-28041",
+    "description": "OpenSSH ssh-agent double free vulnerability",
+    "severity": "medium",
+    "mitre_technique": { "id": "T1068", "name": "Exploitation for Privilege Escalation" }
+  }
+]

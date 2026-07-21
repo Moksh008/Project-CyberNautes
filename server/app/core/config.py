@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     
     # Firebase
     FIREBASE_CREDENTIALS_PATH: Optional[str] = None
+    FIREBASE_API_KEY: Optional[str] = None
+    FIREBASE_AUTH_DOMAIN: Optional[str] = None
+    FIREBASE_PROJECT_ID: Optional[str] = None
+    FIREBASE_STORAGE_BUCKET: Optional[str] = None
+    FIREBASE_MESSAGING_SENDER_ID: Optional[str] = None
+    FIREBASE_APP_ID: Optional[str] = None
+    FIREBASE_MEASUREMENT_ID: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
