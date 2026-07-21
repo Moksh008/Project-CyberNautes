@@ -73,7 +73,7 @@ const Navbar1 = () => {
               href="#"
               className="inline-flex items-center justify-center px-5 py-2 text-[13px] font-medium text-black bg-white rounded-full hover:bg-white/90 transition-all"
             >
-              Get Started
+              Login
             </a>
           </motion.div>
 
@@ -139,7 +139,7 @@ const Navbar1 = () => {
                   className="inline-flex items-center justify-center w-full px-5 py-4 text-base font-medium text-black bg-white rounded-full hover:bg-white/90 transition-colors"
                   onClick={toggleMenu}
                 >
-                  Get Started
+                  Login
                 </a>
               </motion.div>
             </div>

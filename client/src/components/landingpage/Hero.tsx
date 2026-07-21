@@ -48,7 +48,7 @@ export const Hero = () => {
               whileTap={{ scale: 0.98 }}
               className="bg-white text-black font-semibold rounded-full px-8 py-3.5 text-sm tracking-wide w-full sm:w-auto hover:shadow-lg hover:shadow-white/10 transition-shadow"
             >
-              Connect Repository
+              Login
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.03 }}

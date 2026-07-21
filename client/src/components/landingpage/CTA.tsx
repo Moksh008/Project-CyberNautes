@@ -52,7 +52,7 @@ export const CTA = () => {
             whileTap={{ scale: 0.98 }}
             className="bg-white text-black font-semibold rounded-full px-10 py-4 text-sm tracking-wide hover:shadow-lg hover:shadow-white/20 transition-all flex items-center gap-2 group"
           >
-            Connect GitHub
+            Login
             <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
           </motion.button>
           <motion.button
