@@ -73,7 +73,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 **Core Architecture & Tech Stack:**
 - **Frontend:** React (TSX) + Tailwind CSS (Vercel par deployable)
 - **Backend:** FastAPI (Python)
-- **Databases:** PostgreSQL (Relational) + Neo4j (Knowledge Graph for mapping attack paths)
+- **Databases:** Firebase Firestore (NoSQL) + Neo4j (Knowledge Graph for mapping attack paths)
 - **AI Agents Engine:** LangGraph + Gemini / GPT Models (Red Team vs Blue Team agents)
 - **Authentication:** Firebase Auth
 - **Sandbox Environment:** Ephemeral Docker Containers (Lightweight Alpine Linux) for safely detonating exploits
