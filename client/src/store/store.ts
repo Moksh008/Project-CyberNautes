@@ -1,12 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
-
-const dummyReducer = (state = { initialized: true }) => {
-  return state;
-};
+import assessmentReducer from './slices/assessmentSlice';
+import sandboxReducer from './slices/sandboxSlice';
+import remediationReducer from './slices/remediationSlice';
 
 export const store = configureStore({
   reducer: {
-    app: dummyReducer,
+    assessment: assessmentReducer,
+    sandbox: sandboxReducer,
+    remediation: remediationReducer,
   },
 });
 

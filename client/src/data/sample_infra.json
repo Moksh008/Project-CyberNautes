@@ -1,0 +1,77 @@
+{
+  "name": "Acme Corp Production Infrastructure",
+  "assets": [
+    {
+      "id": "web-01",
+      "name": "Public Apache Web Gateway",
+      "type": "server",
+      "os": "Linux Alpine 3.14",
+      "internet_facing": true,
+      "software": [
+        {
+          "name": "apache",
+          "version": "2.4.49"
+        }
+      ]
+    },
+    {
+      "id": "app-01",
+      "name": "Internal Auth Service",
+      "type": "application",
+      "os": "Ubuntu 20.04",
+      "internet_facing": false,
+      "software": [
+        {
+          "name": "openssl",
+          "version": "1.0.1"
+        }
+      ]
+    },
+    {
+      "id": "ssh-gateway",
+      "name": "Jump Server / Bastion",
+      "type": "server",
+      "os": "Debian 11",
+      "internet_facing": false,
+      "software": [
+        {
+          "name": "openssh",
+          "version": "8.5"
+        }
+      ]
+    },
+    {
+      "id": "db-01",
+      "name": "Primary Customer Database",
+      "type": "database",
+      "os": "Ubuntu 22.04",
+      "internet_facing": false,
+      "software": [
+        {
+          "name": "postgresql",
+          "version": "14.2"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "source": "web-01",
+      "target": "app-01",
+      "protocol": "HTTPS",
+      "port": 443
+    },
+    {
+      "source": "app-01",
+      "target": "ssh-gateway",
+      "protocol": "SSH",
+      "port": 22
+    },
+    {
+      "source": "ssh-gateway",
+      "target": "db-01",
+      "protocol": "TCP",
+      "port": 5432
+    }
+  ]
+}

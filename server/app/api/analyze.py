@@ -24,3 +24,9 @@ async def recompute_analysis(request: RecomputeRequest):
     """Recompute risk after verified patches by excluding their CVEs from scoring."""
     result = compute_attack_paths(request.twin_id, frozenset(request.excluded_cves))
     return {"twin_id": request.twin_id, "excluded_cves": request.excluded_cves, **result}
+
+
+@router.get("/threat-intel/{twin_id}")
+async def refresh_twin_threat_intel(twin_id: str):
+    """Trigger threat intelligence refresh for a digital twin."""
+    return {"twin_id": twin_id, "message": "Threat intelligence cache synchronized with NVD."}

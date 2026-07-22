@@ -42,8 +42,16 @@ def _score_path(
                 continue  # patch verified in sandbox — no longer contributes to risk
             unique_cves[cve["cve_id"]] = cve
 
-    risk_score = sum(SEVERITY_WEIGHTS.get(cve["severity"], 0) for cve in unique_cves.values())
-    return min(risk_score, 100), list(unique_cves.values())
+    # Aggregate risk as the probability that at least one CVE leads to compromise:
+    # 1 - Π(1 - severity_weight). This stays bounded in [0, 100) yet strictly
+    # decreases every time a CVE is excluded, so partial remediation is always visible
+    # (the previous additive sum saturated at a flat 100 and hid all progress).
+    survival = 1.0
+    for cve in unique_cves.values():
+        weight = SEVERITY_WEIGHTS.get(cve["severity"], 0) / 100
+        survival *= 1 - weight
+    risk_score = round(100 * (1 - survival))
+    return risk_score, list(unique_cves.values())
 
 
 def compute_attack_paths(twin_id: str, excluded_cves: frozenset[str] = frozenset()) -> dict:

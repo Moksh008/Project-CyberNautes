@@ -111,9 +111,9 @@ Once the user is satisfied with the verified risk reduction, a **Remediation Age
 *   **Example:** If the user selected "Enable Firewall Rule" and "Patch Apache," the AI outputs a `ufw` bash script to block the port and an Ansible playbook to upgrade Apache.
 *   *The user can copy, download, or review this code before applying it to production.*
 
-## 12. MVP Features
+## 12. Functional Requirements & Scope (MVP)
 
-**Must Have**
+**Must Have (In Scope)**
 * Upload Infrastructure JSON
 * Digital Twin Generation & Neo4j Knowledge Graph
 * Attack Path Computation (Graph-based)
@@ -121,9 +121,16 @@ Once the user is satisfied with the verified risk reduction, a **Remediation Age
 * **Advanced Red Team Agent (Metasploit, Scapy, Headless Burp/ZAP, MITM simulation)**
 * Defense & Report AI Agents
 * AI Recommendations & User Selection
-* Live Patch Verification in Sandbox
+* Live Patch Verification in Sandbox (for the 3 predefined MVP scenarios)
 * Risk Score Recalculation & Explainability Panel
 * **Remediation Agent (Code/Script Generation & Export)**
+
+**Out of Scope**
+* Real exploitation of production infrastructure (attacks run strictly in the ephemeral sandbox)
+* Execution of actual ransomware or malware on host systems
+* Packet interception on live networks or MitM attacks on real traffic
+* Live Burp Suite or manual penetration testing tools outside the headless automated models
+* Support for attack scenarios beyond the 3 predefined MVP scenarios
 
 **Nice to Have**
 * Interactive graph visualization
@@ -131,7 +138,45 @@ Once the user is satisfied with the verified risk reduction, a **Remediation Age
 * Cloud infrastructure support
 * Historical comparison of simulations
 
-## 13. Tech Stack
+## 13. Supported Attack Scenarios (MVP)
+
+The MVP should simulate three predefined attack scenarios:
+
+1. Remote Code Execution (RCE) via an internet-facing Apache Web Server
+   - Example vulnerability: CVE-2024-6387
+   - MITRE ATT&CK: Initial Access (T1190)
+   - Attack Chain: Internet → Apache Server → Remote Code Execution → Application Server → Database
+   - AI Recommendations:
+     - Patch Apache
+     - Enable Web Application Firewall (WAF)
+     - Restrict Database Access
+     - Network Segmentation
+
+2. ProFTPD FTP Server Compromise
+   - Example vulnerability: CVE-2015-3306
+   - MITRE ATT&CK: Initial Access (T1190), Execution (T1059)
+   - Attack Chain: Internet → ProFTPD Server → Application Server → Database
+   - AI Recommendations:
+     - Upgrade ProFTPD version
+     - Restrict FTP access to known IPs
+     - Disable anonymous FTP
+
+3. SQL Injection (SQLi) on Web Application
+   - Objective: Extract data or bypass authentication via unsanitized inputs.
+   - Attack Chain: Internet → Web Application → SQL Injection → Database
+   - Assets Involved: Web Application, Backend Database
+   - AI Recommendations:
+     - Use Prepared Statements (Parameterized Queries)
+     - Implement Input Validation
+     - Apply Least Privilege DB Access
+   - Outcome: Sandbox verifies that the injection payload is blocked.
+
+## 14. Expected Outputs
+* **Risk Score & Explanations:** Real-time feedback on how risk is mitigated.
+* **Sandbox Verification:** Logs and status indicators showing successful mitigation in the ephemeral container.
+* **Remediation Assets:** Downloadable Bash scripts, Ansible playbooks, and Git diffs representing the verified fixes.
+
+## 15. Tech Stack
 
 | Component | Technology |
 | :--- | :--- |

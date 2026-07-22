@@ -1,0 +1,10 @@
+{
+  "CWE-22": { "id": "T1190", "name": "Exploit Public-Facing Application" },
+  "CWE-200": { "id": "T1040", "name": "Network Sniffing" },
+  "CWE-416": { "id": "T1068", "name": "Exploitation for Privilege Escalation" },
+  "CWE-119": { "id": "T1203", "name": "Exploitation for Client Execution" },
+  "CWE-89": { "id": "T1190", "name": "Exploit Public-Facing Application" },
+  "CWE-79": { "id": "T1059", "name": "Command and Scripting Interpreter" },
+  "CWE-78": { "id": "T1059", "name": "Command and Scripting Interpreter" },
+  "DEFAULT": { "id": "T1190", "name": "Exploit Public-Facing Application" }
+}
