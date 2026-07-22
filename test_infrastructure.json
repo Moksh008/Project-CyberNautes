@@ -1,0 +1,81 @@
+{
+  "name": "SentinelAI MVP Test Infrastructure",
+  "assets": [
+    {
+      "id": "asset-1",
+      "name": "Public Web Server",
+      "type": "server",
+      "os": "Ubuntu 22.04",
+      "internet_facing": true,
+      "software": [
+        {
+          "name": "Apache",
+          "version": "2.4.49"
+        },
+        {
+          "name": "OpenSSH",
+          "version": "8.9p1"
+        }
+      ]
+    },
+    {
+      "id": "asset-2",
+      "name": "Public FTP Server",
+      "type": "server",
+      "os": "Debian 11",
+      "internet_facing": true,
+      "software": [
+        {
+          "name": "ProFTPD",
+          "version": "1.3.5"
+        }
+      ]
+    },
+    {
+      "id": "asset-3",
+      "name": "Internal App Server",
+      "type": "application",
+      "os": "Ubuntu 22.04",
+      "internet_facing": false,
+      "software": [
+        {
+          "name": "Node.js",
+          "version": "18.16.0"
+        }
+      ]
+    },
+    {
+      "id": "asset-4",
+      "name": "Backend Database",
+      "type": "database",
+      "os": "Ubuntu 20.04",
+      "internet_facing": false,
+      "software": [
+        {
+          "name": "PostgreSQL",
+          "version": "14.5"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "source": "asset-1",
+      "target": "asset-3",
+      "protocol": "HTTP",
+      "port": 8080
+    },
+    {
+      "source": "asset-2",
+      "target": "asset-3",
+      "protocol": "TCP",
+      "port": 22
+    },
+    {
+      "source": "asset-3",
+      "target": "asset-4",
+      "protocol": "TCP",
+      "port": 5432
+    }
+  ]
+}

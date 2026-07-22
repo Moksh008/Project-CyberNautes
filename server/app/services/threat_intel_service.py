@@ -6,20 +6,9 @@ from pathlib import Path
 
 from ..core.neo4j_db import get_neo4j
 from ..models.infrastructure import InfrastructurePayload
+from .nvd_service import fetch_cves_from_nvd
 
 logger = logging.getLogger(__name__)
-
-CVE_DATABASE_PATH = Path(__file__).resolve().parent.parent / "data" / "cve_database.json"
-
-_cve_database: list[dict] | None = None
-
-
-def _load_cve_database() -> list[dict]:
-    global _cve_database
-    if _cve_database is None:
-        with open(CVE_DATABASE_PATH, "r", encoding="utf-8") as f:
-            _cve_database = json.load(f)
-    return _cve_database
 
 
 def map_threat_intel(twin_id: str, payload: InfrastructurePayload) -> None:
@@ -28,17 +17,10 @@ def map_threat_intel(twin_id: str, payload: InfrastructurePayload) -> None:
         logger.warning("Neo4j driver not initialized; skipping threat intel mapping.")
         return
 
-    cve_database = _load_cve_database()
-
     with driver.session() as session:
         for asset in payload.assets:
             for software in asset.software:
-                matches = [
-                    entry
-                    for entry in cve_database
-                    if entry["software"].lower() == software.name.lower()
-                    and entry["version"] == software.version
-                ]
+                matches = fetch_cves_from_nvd(software.name, software.version)
                 for entry in matches:
                     session.run(
                         """

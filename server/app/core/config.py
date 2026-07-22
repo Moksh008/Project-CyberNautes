@@ -10,9 +10,10 @@ class Settings(BaseSettings):
     NEO4J_USER: str
     NEO4J_PASSWORD: str
     
-    # LLM APIs
+    # Threat Intel & LLM APIs
     OPENAI_API_KEY: Optional[str] = None
     GOOGLE_API_KEY: Optional[str] = None
+    NVD_API_KEY: Optional[str] = None
     
     # Firebase
     FIREBASE_CREDENTIALS_PATH: Optional[str] = None
