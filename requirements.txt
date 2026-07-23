@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+neo4j
+firebase-admin
+langgraph
+langchain
+langchain-openai
+langchain-google-genai
+docker
+python-dotenv

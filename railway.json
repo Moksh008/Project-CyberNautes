@@ -1,11 +1,10 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS",
-    "watchPatterns": ["server/**"]
+    "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "cd server && pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "sh -c 'cd server && uvicorn app.main:app --host 0.0.0.0 --port $PORT'",
     "restartPolicyType": "ON_FAILURE"
   }
 }
