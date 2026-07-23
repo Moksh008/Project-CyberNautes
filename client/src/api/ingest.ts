@@ -38,3 +38,25 @@ export function ingestInfrastructure(payload: InfrastructurePayload): Promise<In
     body: JSON.stringify(payload),
   });
 }
+
+export interface GithubScanSummary {
+  owner: string;
+  repo: string;
+  branch: string;
+  files_scanned: string[];
+  dependencies_found: number;
+}
+
+export interface GithubIngestResponse {
+  message: string;
+  twin_id: string;
+  payload: InfrastructurePayload;
+  scan_summary: GithubScanSummary;
+}
+
+export function ingestGithubRepo(repoUrl: string): Promise<GithubIngestResponse> {
+  return apiFetch<GithubIngestResponse>('/api/ingest/github', {
+    method: 'POST',
+    body: JSON.stringify({ repo_url: repoUrl }),
+  });
+}

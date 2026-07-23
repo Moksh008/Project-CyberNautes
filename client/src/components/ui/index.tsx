@@ -3,6 +3,7 @@
 // copy-pasted across every view, plus the risk visualizations.
 
 import type { ReactNode } from 'react';
+import { ExternalLink, ShieldCheck, Target } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export const CARD = 'rounded-xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl';
@@ -92,14 +93,18 @@ function riskColor(score: number): string {
 // Radial gauge for a 0-100 risk score.
 export function RiskGauge({ score, size = 132 }: { score: number; size?: number }) {
   const clamped = Math.max(0, Math.min(100, score));
-  const stroke = 10;
+  const stroke = Math.max(4, Math.round(size * 0.08));
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const dash = (clamped / 100) * circumference;
   const color = riskColor(clamped);
 
+  const isTiny = size < 40;
+  const isSmall = size >= 40 && size < 60;
+  const isMedium = size >= 60 && size < 90;
+
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
+    <div className="relative shrink-0 flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
         <circle
@@ -114,9 +119,30 @@ export function RiskGauge({ score, size = 132 }: { score: number; size?: number 
           style={{ transition: 'stroke-dasharray 700ms ease, stroke 400ms ease' }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-extrabold text-white">{clamped}</span>
-        <span className="text-[10px] uppercase tracking-wider text-zinc-500">/ 100</span>
+      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none select-none">
+        <span
+          className={`font-black tracking-tight ${
+            isTiny
+              ? 'text-xs font-black'
+              : isSmall
+              ? 'text-sm font-black'
+              : isMedium
+              ? 'text-xl font-black'
+              : 'text-4xl font-black'
+          }`}
+          style={{ color }}
+        >
+          {clamped}
+        </span>
+        {!isTiny && (
+          <span
+            className={`font-bold uppercase tracking-wider text-zinc-400 ${
+              isSmall ? 'text-[8px] mt-0.5' : isMedium ? 'text-[9px] mt-0.5' : 'text-xs mt-1'
+            }`}
+          >
+            / 100
+          </span>
+        )}
       </div>
     </div>
   );
@@ -144,6 +170,118 @@ export function RiskBar({ before, after }: { before: number; after: number }) {
         </div>
       ))}
     </div>
+  );
+}
+
+// Threat-intel enrichment card for a single CVE: CVSS breakdown, MITRE ATT&CK
+// mapping, CWE, and public exploit / advisory references pulled from NVD.
+export interface CveIntel {
+  cve_id: string;
+  severity: string;
+  cvss_score?: number | null;
+  cvss_vector?: string | null;
+  cwe?: string | null;
+  description?: string | null;
+  references?: string[];
+  mitre_technique?: { id: string; name: string } | null;
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
+
+export function CveIntelCard({ cve, verified }: { cve: CveIntel; verified?: boolean }) {
+  return (
+    <div className={cn(CARD, 'p-4 space-y-3')}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-sm font-bold text-white">{cve.cve_id}</span>
+          <Badge tone={severityTone(cve.severity)}>{cve.severity}</Badge>
+          {verified && (
+            <Badge tone="success"><ShieldCheck className="h-3 w-3" /> Sandbox-verified</Badge>
+          )}
+        </div>
+        {typeof cve.cvss_score === 'number' && (
+          <span className="font-mono text-xs text-zinc-300">
+            CVSS <strong className="text-white">{cve.cvss_score.toFixed(1)}</strong>
+          </span>
+        )}
+      </div>
+
+      {cve.description && <p className="text-xs leading-relaxed text-zinc-400">{cve.description}</p>}
+
+      <div className="flex flex-wrap items-center gap-2">
+        {cve.mitre_technique && (
+          <Badge tone="info">
+            <Target className="h-3 w-3" /> {cve.mitre_technique.id} · {cve.mitre_technique.name}
+          </Badge>
+        )}
+        {cve.cwe && <Badge tone="neutral" className="font-mono">{cve.cwe}</Badge>}
+      </div>
+
+      {cve.cvss_vector && (
+        <p className="font-mono text-[10px] text-zinc-500 break-all">{cve.cvss_vector}</p>
+      )}
+
+      {cve.references && cve.references.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {cve.references.map((url, i) => (
+            <a
+              key={`${url}-${i}`}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-blue-300 hover:bg-white/10"
+            >
+              <ExternalLink className="h-3 w-3" /> {hostOf(url)}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Multi-agent orchestrator phase timeline (Recon -> Exploitation -> Remediation -> Report).
+export interface AgentPhaseItem {
+  id: string;
+  title: string;
+  status: string;
+  summary: string;
+  detail: string;
+}
+
+export function AgentPhaseTimeline({ phases }: { phases: AgentPhaseItem[] }) {
+  return (
+    <ol className="relative space-y-4 border-l border-white/10 pl-6">
+      {phases.map((phase) => {
+        const done = phase.status === 'complete';
+        return (
+          <li key={phase.id} className="relative">
+            <span
+              className={cn(
+                'absolute -left-[27px] flex h-3.5 w-3.5 items-center justify-center rounded-full ring-4 ring-zinc-950',
+                done ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse',
+              )}
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-white">{phase.title}</span>
+              <Badge tone={done ? 'success' : 'medium'} className="uppercase">{phase.status}</Badge>
+            </div>
+            {phase.summary && <p className="mt-1 text-xs text-zinc-300 leading-relaxed">{phase.summary}</p>}
+            {phase.detail && (
+              <p className="mt-1 rounded-lg border border-white/5 bg-white/[0.03] p-2 text-[11px] italic text-zinc-400">
+                <span className="not-italic font-semibold text-purple-300">Deep Think: </span>{phase.detail}
+              </p>
+            )}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 

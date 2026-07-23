@@ -26,7 +26,9 @@ def map_threat_intel(twin_id: str, payload: InfrastructurePayload) -> None:
                         """
                         MATCH (s:Software {name: $name, version: $version, twin_id: $twin_id})
                         MERGE (c:CVE {cve_id: $cve_id})
-                        SET c.description = $description, c.severity = $severity
+                        SET c.description = $description, c.severity = $severity,
+                            c.cvss_score = $cvss_score, c.cvss_vector = $cvss_vector,
+                            c.cwe = $cwe, c.references = $references
                         MERGE (s)-[:HAS_CVE]->(c)
                         MERGE (m:MitreTechnique {id: $mitre_id})
                         SET m.name = $mitre_name
@@ -38,6 +40,10 @@ def map_threat_intel(twin_id: str, payload: InfrastructurePayload) -> None:
                         cve_id=entry["cve_id"],
                         description=entry["description"],
                         severity=entry["severity"],
+                        cvss_score=entry.get("cvss_score"),
+                        cvss_vector=entry.get("cvss_vector", ""),
+                        cwe=entry.get("cwe", ""),
+                        references=entry.get("references", []),
                         mitre_id=entry["mitre_technique"]["id"],
                         mitre_name=entry["mitre_technique"]["name"],
                     )

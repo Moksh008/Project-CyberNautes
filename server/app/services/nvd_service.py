@@ -62,6 +62,14 @@ def _map_cwe_to_mitre(cwe_id: Optional[str]) -> dict:
     return mitre_map.get("DEFAULT", {"id": "T1190", "name": "Exploit Public-Facing Application"})
 
 
+def _extract_references(references: list[dict]) -> list[str]:
+    """Pick a few useful reference URLs from an NVD entry, surfacing any tagged
+    'Exploit' first so the UI can link straight to public PoCs / ExploitDB."""
+    exploit_urls = [r["url"] for r in references if "Exploit" in r.get("tags", []) and r.get("url")]
+    other_urls = [r["url"] for r in references if r.get("url") and r["url"] not in exploit_urls]
+    return (exploit_urls + other_urls)[:5]
+
+
 def fetch_cves_from_nvd(software: str, version: Optional[str] = None) -> list[dict]:
     """Query live NVD CVE API v2 with in-memory TTL caching and graceful local fallback."""
     sw_key = software.lower().strip()
@@ -118,6 +126,7 @@ def fetch_cves_from_nvd(software: str, version: Optional[str] = None) -> list[di
             # Default missing CVSS to a moderate score rather than "high" so
             # unscored CVEs don't artificially inflate the risk total.
             base_score = cvss_data.get("baseScore", 5.0) if cvss_data else 5.0
+            cvss_vector = cvss_data.get("vectorString", "") if cvss_data else ""
             severity = _cvss_to_severity(base_score)
 
             # Parse CWE
@@ -136,6 +145,10 @@ def fetch_cves_from_nvd(software: str, version: Optional[str] = None) -> list[di
                 "cve_id": cve_id,
                 "description": desc,
                 "severity": severity,
+                "cvss_score": base_score,
+                "cvss_vector": cvss_vector,
+                "cwe": cwe_id or "",
+                "references": _extract_references(cve_item.get("references", [])),
                 "mitre_technique": mitre_tech,
             })
 

@@ -19,13 +19,30 @@ SEVERITY_WEIGHTS = {
 def _get_cves_by_asset(twin_id: str, session) -> dict[str, list[dict]]:
     query = """
         MATCH (a:Asset {twin_id: $twin_id})-[:RUNS]->(:Software)-[:HAS_CVE]->(c:CVE)
-        RETURN a.id AS asset_id, c.cve_id AS cve_id, c.severity AS severity
+        OPTIONAL MATCH (c)-[:MAPS_TO]->(m:MitreTechnique)
+        RETURN a.id AS asset_id, c.cve_id AS cve_id, c.severity AS severity,
+               c.cvss_score AS cvss_score, c.cvss_vector AS cvss_vector,
+               c.cwe AS cwe, c.description AS description, c.references AS references,
+               m.id AS mitre_id, m.name AS mitre_name
     """
     result = session.run(query, twin_id=twin_id)
     cves_by_asset: dict[str, list[dict]] = {}
     for record in result:
         cves_by_asset.setdefault(record["asset_id"], []).append(
-            {"cve_id": record["cve_id"], "severity": record["severity"]}
+            {
+                "cve_id": record["cve_id"],
+                "severity": record["severity"],
+                "cvss_score": record["cvss_score"],
+                "cvss_vector": record["cvss_vector"],
+                "cwe": record["cwe"],
+                "description": record["description"],
+                "references": record["references"] or [],
+                "mitre_technique": (
+                    {"id": record["mitre_id"], "name": record["mitre_name"]}
+                    if record["mitre_id"]
+                    else None
+                ),
+            }
         )
     return cves_by_asset
 
@@ -74,6 +91,14 @@ def compute_attack_paths(twin_id: str, excluded_cves: frozenset[str] = frozenset
             length(path) AS hops
     """
 
+    # Internet-facing assets that a single-node "path" should cover (e.g. a scanned
+    # GitHub repo, which is one asset with no CONNECTS_TO edges). Without this, such
+    # a twin yields zero paths and the whole downstream analysis comes back empty.
+    single_node_query = """
+        MATCH (a:Asset {twin_id: $twin_id, internet_facing: true})
+        RETURN a.id AS asset_id, a.name AS asset_name
+    """
+
     with driver.session() as session:
         cves_by_asset = _get_cves_by_asset(twin_id, session)
         result = session.run(query, twin_id=twin_id)
@@ -89,6 +114,29 @@ def compute_attack_paths(twin_id: str, excluded_cves: frozenset[str] = frozenset
                     "target_name": record["target_name"],
                     "path": record["hop_names"],
                     "hops": record["hops"],
+                    "risk_score": risk_score,
+                    "cves": cves,
+                }
+            )
+
+        # Add a direct-exposure path for each internet-facing asset with CVEs that
+        # isn't already the entry of a multi-hop path (covers the single-asset repo).
+        existing_entries = {p["entry_id"] for p in attack_paths}
+        for record in session.run(single_node_query, twin_id=twin_id):
+            asset_id = record["asset_id"]
+            if asset_id in existing_entries:
+                continue
+            risk_score, cves = _score_path([asset_id], cves_by_asset, excluded_cves)
+            if not cves:
+                continue  # nothing exploitable on this asset — don't invent a path
+            attack_paths.append(
+                {
+                    "entry_id": asset_id,
+                    "entry_name": record["asset_name"],
+                    "target_id": asset_id,
+                    "target_name": record["asset_name"],
+                    "path": [record["asset_name"]],
+                    "hops": 0,
                     "risk_score": risk_score,
                     "cves": cves,
                 }

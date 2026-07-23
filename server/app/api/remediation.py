@@ -8,9 +8,13 @@ from ..models.remediation import (
     SandboxVerifyRequest,
     SandboxResult,
     CodeGenRequest,
+    OpenPRRequest,
+    ManifestPRRequest,
 )
 from ..services.sandbox_service import verify_cve
 from ..services.remediation_service import generate_remediation
+from ..services.github_pr_service import GithubPRError, open_remediation_pr
+from ..services.manifest_patch_service import open_manifest_fix_pr
 
 logger = logging.getLogger(__name__)
 
@@ -45,3 +49,21 @@ async def generate(request: CodeGenRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return {"twin_id": request.twin_id, "format": request.format, "code": code}
+
+
+@router.post("/pr")
+async def open_pr(request: OpenPRRequest):
+    try:
+        return open_remediation_pr(
+            request.repo_url, request.code, request.format, request.title, request.body
+        )
+    except GithubPRError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/manifest-pr")
+async def manifest_pr(request: ManifestPRRequest):
+    try:
+        return open_manifest_fix_pr(request.repo_url, request.twin_id)
+    except GithubPRError as e:
+        raise HTTPException(status_code=400, detail=str(e))

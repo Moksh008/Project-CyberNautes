@@ -11,4 +11,9 @@ export const SUPPORTED_SANDBOX_CVES = [
     name: 'OpenSSH ssh-agent Double Free',
     description: 'Grabs the live SSH banner to confirm the server version is patched (>=8.5).',
   },
+  {
+    cve: 'CVE-2015-3306',
+    name: 'ProFTPD mod_copy RCE',
+    description: 'Grabs the live FTP banner and fires SITE CPFR/CPTO to confirm mod_copy is exploitable (ProFTPD <1.3.6).',
+  },
 ];

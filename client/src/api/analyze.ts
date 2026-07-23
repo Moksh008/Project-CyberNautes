@@ -1,8 +1,19 @@
 import { apiFetch } from './client';
 
+export interface MitreTechnique {
+  id: string;
+  name: string;
+}
+
 export interface CVEEntry {
   cve_id: string;
   severity: string;
+  cvss_score?: number | null;
+  cvss_vector?: string | null;
+  cwe?: string | null;
+  description?: string | null;
+  references?: string[];
+  mitre_technique?: MitreTechnique | null;
 }
 
 export interface AttackPath {
@@ -28,11 +39,26 @@ export interface OffenseAnalysis {
   entry_point: string;
   exploit_chain: string;
   assets_at_risk: string[];
+  strategic_assessment?: string;
+}
+
+export interface AgentPhase {
+  id: string;
+  title: string;
+  status: string;
+  summary: string;
+  detail: string;
 }
 
 export interface ReportOutput {
   executive_summary: string;
+  risk_posture?: string;
+  key_findings?: string[];
+  attack_narrative?: string;
   business_impact: string;
+  remediation_roadmap?: string[];
+  compliance_notes?: string;
+  next_steps?: string[];
 }
 
 export interface AnalyzeResponse {
@@ -42,6 +68,7 @@ export interface AnalyzeResponse {
   offense_analysis: OffenseAnalysis | null;
   recommendations: Recommendation[];
   report: ReportOutput | null;
+  agent_phases?: AgentPhase[];
 }
 
 export interface RecomputeResponse {
