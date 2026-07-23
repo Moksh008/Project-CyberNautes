@@ -1,5 +1,5 @@
 const envApiUrl: string | undefined = import.meta.env.VITE_API_BASE_URL;
-const BASE_URL = envApiUrl ?? 'http://localhost:8000';
+export const BASE_URL = envApiUrl || 'https://project-cybernautes-production.up.railway.app';
 
 export class ApiError extends Error {
   status: number;
