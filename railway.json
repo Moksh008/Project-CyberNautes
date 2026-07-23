@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "sh -c 'cd server && uvicorn app.main:app --host 0.0.0.0 --port $PORT'",
+    "startCommand": "uvicorn server.app.main:app --host 0.0.0.0 --port $PORT",
     "restartPolicyType": "ON_FAILURE"
   }
 }

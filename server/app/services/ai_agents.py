@@ -1,9 +1,18 @@
-# LangGraph Red Team (Offense) / Blue Team (Defense) / Report AI agents
-
 from typing import TypedDict, Optional
+import logging
 
-from langchain_openai import ChatOpenAI
-from langgraph.graph import StateGraph, START, END
+logger = logging.getLogger(__name__)
+
+try:
+    from langchain_openai import ChatOpenAI
+except ImportError:
+    ChatOpenAI = None
+
+try:
+    from langgraph.graph import StateGraph, START, END
+except ImportError:
+    StateGraph, START, END = None, None, None
+
 from pydantic import BaseModel
 
 from ..core.config import settings
@@ -150,15 +159,18 @@ Produce:
     return {"report": result}
 
 
-_graph = StateGraph(AgentState)
-_graph.add_node("offense", offense_node)
-_graph.add_node("defense", defense_node)
-_graph.add_node("report", report_node)
-_graph.add_edge(START, "offense")
-_graph.add_edge("offense", "defense")
-_graph.add_edge("defense", "report")
-_graph.add_edge("report", END)
-compiled_agent_graph = _graph.compile()
+if StateGraph is not None:
+    _graph = StateGraph(AgentState)
+    _graph.add_node("offense", offense_node)
+    _graph.add_node("defense", defense_node)
+    _graph.add_node("report", report_node)
+    _graph.add_edge(START, "offense")
+    _graph.add_edge("offense", "defense")
+    _graph.add_edge("defense", "report")
+    _graph.add_edge("report", END)
+    compiled_agent_graph = _graph.compile()
+else:
+    compiled_agent_graph = None
 
 
 def _build_phase_timeline(risk_score: int, attack_paths: list[dict], state: dict) -> list[dict]:
@@ -264,8 +276,8 @@ def _generate_fallback_agent_result(risk_score: int, attack_paths: list[dict]) -
 
 
 def run_agents(risk_score: int, attack_paths: list[dict]) -> dict:
-    if not attack_paths:
-        return {"offense_analysis": None, "recommendations": [], "report": None, "agent_phases": []}
+    if not attack_paths or compiled_agent_graph is None:
+        return _generate_fallback_agent_result(risk_score, attack_paths)
 
     try:
         initial_state: AgentState = {

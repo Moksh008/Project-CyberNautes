@@ -1,5 +1,8 @@
-# pyrefly: ignore [missing-import]
-from neo4j import GraphDatabase
+try:
+    from neo4j import GraphDatabase
+except ImportError:
+    GraphDatabase = None
+    logger.warning("neo4j module not installed; running in neo4j-less mode.")
 from .config import settings
 import logging
 
@@ -11,6 +14,9 @@ class Neo4jDriver:
         self.connect()
 
     def connect(self):
+        if GraphDatabase is None:
+            logger.warning("GraphDatabase driver unavailable.")
+            return
         try:
             self.driver = GraphDatabase.driver(
                 settings.NEO4J_URI, 
