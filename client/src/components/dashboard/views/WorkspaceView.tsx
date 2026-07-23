@@ -939,26 +939,27 @@ export function WorkspaceView() {
       {/* MAIN BODY SPLIT SCREEN                                               */}
       {/* Left (38%): Chat Interface | Right (62%): Current Feature Going On    */}
       {/* ==================================================================== */}
-      {/* Native Mobile App Header */}
-      <header className="flex lg:hidden items-center justify-between border-b border-white/10 bg-[#0d0e12] px-4 py-2.5 shrink-0 z-40">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white shadow">
-            <ShieldCheck className="h-4 w-4" />
+      {/* Stitch AI Native Mobile App Header */}
+      <header className="flex lg:hidden items-center justify-between border-b border-white/10 bg-[#05070a]/90 backdrop-blur-xl px-4 h-16 shrink-0 z-40">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white font-bold text-xs shadow-lg shadow-blue-500/20">
+            <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xs font-bold text-white leading-none">SentinelAI</h1>
-            <span className="text-[9px] text-emerald-400 font-mono flex items-center gap-1 mt-0.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Cyber Twin
-            </span>
+            <h1 className="text-sm font-black tracking-tighter text-[#adc6ff] leading-none">SENTINEL AI</h1>
+            <div className="flex items-center gap-1.5 mt-1 px-2 py-0.5 bg-white/5 border border-white/10 rounded-full">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              <span className="text-[9px] font-mono font-bold text-zinc-300 uppercase tracking-wider">TWIN ACTIVE</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-[11px] font-bold text-rose-300">
-            <span>Risk:</span>
-            <span className="font-mono text-rose-400">{riskScore}</span>
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 rounded-full border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-[11px] font-bold text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.2)]">
+            <span className="text-[10px] text-zinc-400 uppercase">RISK:</span>
+            <span className="font-mono text-sm font-black text-rose-400">{riskScore}</span>
           </div>
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 text-[11px] font-bold text-white shadow">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 text-xs font-bold text-white shadow border border-white/20">
             M
           </div>
         </div>
@@ -1744,14 +1745,14 @@ export function WorkspaceView() {
         </div>
       </div>
 
-      {/* Fixed Native Bottom Tab Bar for Mobile App */}
-      <nav className="flex lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/15 bg-[#0a0b0e]/95 backdrop-blur-xl px-2 py-1.5 shadow-2xl justify-around items-center">
+      {/* Stitch AI Fixed Native Bottom Tab Bar for Mobile App */}
+      <nav className="flex lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#05070a]/90 backdrop-blur-xl px-2 h-16 shadow-2xl justify-around items-center">
         {[
-          { id: 'chat', label: 'AI Chat', icon: MessageSquare },
-          { id: 'overview', label: 'Twin Graph', icon: Server },
-          { id: 'paths', label: 'Attack Paths', icon: ShieldAlert },
-          { id: 'code', label: 'Fix Code', icon: FileCode2 },
-          { id: 'report', label: 'Report', icon: FileText },
+          { id: 'chat', label: 'AI CHAT', icon: MessageSquare },
+          { id: 'overview', label: 'NODES', icon: Server },
+          { id: 'paths', label: 'ALERTS', icon: ShieldAlert },
+          { id: 'code', label: 'ASSETS', icon: FileCode2 },
+          { id: 'report', label: 'REPORTS', icon: FileText },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = mobileActiveTab === tab.id;
@@ -1764,16 +1765,14 @@ export function WorkspaceView() {
                   setActiveStepTab(tab.id as any);
                 }
               }}
-              className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center h-full px-3 transition-all ${
                 isActive
-                  ? 'text-blue-400 font-bold scale-105'
+                  ? 'text-[#adc6ff] border-t-2 border-[#adc6ff] shadow-[0_-2px_10px_rgba(173,198,255,0.4)]'
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              <div className={`p-1 rounded-lg ${isActive ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40 shadow-sm' : ''}`}>
-                <Icon className="h-4 w-4" />
-              </div>
-              <span className="text-[10px] mt-0.5 tracking-tight font-medium">{tab.label}</span>
+              <Icon className={`h-5 w-5 ${isActive ? 'text-[#adc6ff]' : 'text-zinc-400'}`} />
+              <span className="text-[9px] font-mono font-bold tracking-wider mt-1">{tab.label}</span>
             </button>
           );
         })}
