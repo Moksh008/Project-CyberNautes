@@ -479,6 +479,8 @@ export function WorkspaceView() {
 
   // Stage 1 Sidebar active tab state
   const [stage1Tab, setStage1Tab] = useState<'new_assessment' | 'history' | 'profile' | 'api_keys' | 'settings'>('new_assessment');
+  // Mobile App active navigation tab state
+  const [mobileActiveTab, setMobileActiveTab] = useState<'chat' | 'overview' | 'paths' | 'code' | 'report'>('chat');
 
   // --------------------------------------------------------------------------
   // STAGE 1: INITIAL PAGE WITH SIDEBAR & MULTI-TAB VIEWS ("Let's defend your infrastructure, Moksh")
@@ -937,12 +939,43 @@ export function WorkspaceView() {
       {/* MAIN BODY SPLIT SCREEN                                               */}
       {/* Left (38%): Chat Interface | Right (62%): Current Feature Going On    */}
       {/* ==================================================================== */}
-      <div className="flex flex-col lg:flex-row flex-1 min-h-0 w-full overflow-y-auto lg:overflow-hidden">
+      {/* Native Mobile App Header */}
+      <header className="flex lg:hidden items-center justify-between border-b border-white/10 bg-[#0d0e12] px-4 py-2.5 shrink-0 z-40">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white shadow">
+            <ShieldCheck className="h-4 w-4" />
+          </div>
+          <div>
+            <h1 className="text-xs font-bold text-white leading-none">SentinelAI</h1>
+            <span className="text-[9px] text-emerald-400 font-mono flex items-center gap-1 mt-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Cyber Twin
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-[11px] font-bold text-rose-300">
+            <span>Risk:</span>
+            <span className="font-mono text-rose-400">{riskScore}</span>
+          </div>
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 text-[11px] font-bold text-white shadow">
+            M
+          </div>
+        </div>
+      </header>
+
+      {/* ==================================================================== */}
+      {/* MAIN BODY SPLIT SCREEN / MOBILE VIEW CONTAINER                        */}
+      {/* Left (38%): Chat Interface | Right (62%): Current Feature Going On    */}
+      {/* ==================================================================== */}
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 w-full overflow-hidden pb-14 lg:pb-0">
         
         {/* ================================================================== */}
-        {/* LEFT HAND SIDE: CHAT INTERFACE (MATCHING REFERENCE IMAGE)          */}
+        {/* LEFT HAND SIDE: CHAT INTERFACE                                     */}
         {/* ================================================================== */}
-        <div className="w-full lg:w-[420px] xl:w-[460px] h-[480px] lg:h-full shrink-0 border-b lg:border-b-0 lg:border-r border-white/10 bg-[#16171a] flex flex-col justify-between overflow-hidden">
+        <div className={`w-full lg:w-[420px] xl:w-[460px] h-full shrink-0 border-b lg:border-b-0 lg:border-r border-white/10 bg-[#16171a] flex-col justify-between overflow-hidden ${
+          mobileActiveTab === 'chat' ? 'flex' : 'hidden lg:flex'
+        }`}>
           
           {/* Scrollable Chat Message Stream */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -1138,7 +1171,9 @@ export function WorkspaceView() {
         {/* ================================================================== */}
         {/* RIGHT HAND SIDE: CURRENT FEATURE GOING ON (MATCHING REFERENCE UI)  */}
         {/* ================================================================== */}
-        <div className="flex-1 flex flex-col bg-[#fdfdfd] dark:bg-[#0b0d11] overflow-hidden relative">
+        <div className={`flex-1 flex-col bg-[#fdfdfd] dark:bg-[#0b0d11] overflow-hidden relative h-full ${
+          mobileActiveTab !== 'chat' ? 'flex' : 'hidden lg:flex'
+        }`}>
           
           {/* Top Workbench Feature Selector & Status Bar */}
           <div className="flex items-center justify-between border-b border-white/10 bg-[#16171b] px-4 py-2.5 text-xs text-zinc-300 no-print">
@@ -1707,8 +1742,42 @@ export function WorkspaceView() {
             </button>
           </div>
         </div>
-
       </div>
+
+      {/* Fixed Native Bottom Tab Bar for Mobile App */}
+      <nav className="flex lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/15 bg-[#0a0b0e]/95 backdrop-blur-xl px-2 py-1.5 shadow-2xl justify-around items-center">
+        {[
+          { id: 'chat', label: 'AI Chat', icon: MessageSquare },
+          { id: 'overview', label: 'Twin Graph', icon: Server },
+          { id: 'paths', label: 'Attack Paths', icon: ShieldAlert },
+          { id: 'code', label: 'Fix Code', icon: FileCode2 },
+          { id: 'report', label: 'Report', icon: FileText },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = mobileActiveTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setMobileActiveTab(tab.id as any);
+                if (tab.id !== 'chat') {
+                  setActiveStepTab(tab.id as any);
+                }
+              }}
+              className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+                isActive
+                  ? 'text-blue-400 font-bold scale-105'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              <div className={`p-1 rounded-lg ${isActive ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40 shadow-sm' : ''}`}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <span className="text-[10px] mt-0.5 tracking-tight font-medium">{tab.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
     </div>
   );
