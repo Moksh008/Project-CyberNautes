@@ -14,11 +14,11 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS middleware to allow React frontend to connect
+# CORS middleware to allow Web, Localhost, and Mobile app connections
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, replace with specific frontend URL
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
