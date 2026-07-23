@@ -93,14 +93,18 @@ function riskColor(score: number): string {
 // Radial gauge for a 0-100 risk score.
 export function RiskGauge({ score, size = 132 }: { score: number; size?: number }) {
   const clamped = Math.max(0, Math.min(100, score));
-  const stroke = 10;
+  const stroke = Math.max(4, Math.round(size * 0.08));
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const dash = (clamped / 100) * circumference;
   const color = riskColor(clamped);
 
+  const isTiny = size < 40;
+  const isSmall = size >= 40 && size < 60;
+  const isMedium = size >= 60 && size < 90;
+
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
+    <div className="relative shrink-0 flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
         <circle
@@ -115,9 +119,30 @@ export function RiskGauge({ score, size = 132 }: { score: number; size?: number 
           style={{ transition: 'stroke-dasharray 700ms ease, stroke 400ms ease' }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-extrabold text-white">{clamped}</span>
-        <span className="text-[10px] uppercase tracking-wider text-zinc-500">/ 100</span>
+      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none select-none">
+        <span
+          className={`font-black tracking-tight ${
+            isTiny
+              ? 'text-xs font-black'
+              : isSmall
+              ? 'text-sm font-black'
+              : isMedium
+              ? 'text-xl font-black'
+              : 'text-4xl font-black'
+          }`}
+          style={{ color }}
+        >
+          {clamped}
+        </span>
+        {!isTiny && (
+          <span
+            className={`font-bold uppercase tracking-wider text-zinc-400 ${
+              isSmall ? 'text-[8px] mt-0.5' : isMedium ? 'text-[9px] mt-0.5' : 'text-xs mt-1'
+            }`}
+          >
+            / 100
+          </span>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 // Client-side pentest report export: JSON (full assessment) and CSV (findings table).
 // PDF is handled via the browser print dialog on a print-optimized report layout.
 
-import type { AttackPath, CVEEntry, Recommendation } from '../api/analyze';
+import type { AttackPath, CVEEntry, Recommendation, ReportOutput } from '../api/analyze';
 
 export interface ReportData {
   twin: string | null;
@@ -10,6 +10,7 @@ export interface ReportData {
   risk_score_after: number;
   risk_reduction_pct: number;
   verified_cves: string[];
+  executive_report: ReportOutput | null;
   findings: CVEEntry[];
   attack_paths: AttackPath[];
   recommendations: Recommendation[];
@@ -21,6 +22,7 @@ export function buildReportData(params: {
   riskAfter: number;
   reduction: number;
   verifiedCves: string[];
+  executiveReport: ReportOutput | null;
   findings: CVEEntry[];
   attackPaths: AttackPath[];
   recommendations: Recommendation[];
@@ -32,6 +34,7 @@ export function buildReportData(params: {
     risk_score_after: params.riskAfter,
     risk_reduction_pct: params.reduction,
     verified_cves: params.verifiedCves,
+    executive_report: params.executiveReport,
     findings: params.findings,
     attack_paths: params.attackPaths,
     recommendations: params.recommendations,

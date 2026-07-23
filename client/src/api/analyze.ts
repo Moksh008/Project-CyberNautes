@@ -52,7 +52,13 @@ export interface AgentPhase {
 
 export interface ReportOutput {
   executive_summary: string;
+  risk_posture?: string;
+  key_findings?: string[];
+  attack_narrative?: string;
   business_impact: string;
+  remediation_roadmap?: string[];
+  compliance_notes?: string;
+  next_steps?: string[];
 }
 
 export interface AnalyzeResponse {

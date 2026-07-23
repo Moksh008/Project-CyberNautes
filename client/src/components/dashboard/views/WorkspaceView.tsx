@@ -12,9 +12,9 @@ import {
   UploadCloud, FileCode, Play, AlertCircle, CheckCircle2, RefreshCw,
   Server, ShieldAlert, CheckSquare, Square, ShieldCheck, FlaskConical,
   FileCode2, Sparkles, Terminal, Activity, GitBranch, FileText,
-  ChevronDown, X, Plus, Mic, RotateCw, Share2, Zap,
-  Globe, Monitor, Layers, MessageSquare, Pencil, Type, Focus,
-  ExternalLink, ChevronLeft, ChevronRight, ArrowUp,
+  ChevronDown, X, Plus, Mic,
+  MessageSquare, Pencil, Type, Focus,
+  ChevronLeft, ChevronRight, ArrowUp,
   History, User, Key, Settings, Clock, Database, Cpu
 } from 'lucide-react';
 import { Card, Badge, RiskGauge, HopChain, CveIntelCard, AgentPhaseTimeline } from '../../ui';
@@ -246,6 +246,7 @@ export function WorkspaceView() {
     riskAfter: riskScore,
     reduction,
     verifiedCves,
+    executiveReport: report,
     findings: uniqueCves,
     attackPaths,
     recommendations,
@@ -484,10 +485,10 @@ export function WorkspaceView() {
   // --------------------------------------------------------------------------
   if (!twinId && !isIngesting) {
     return (
-      <div className="flex h-screen w-full overflow-hidden bg-[#090a0d] text-white font-sans">
+      <div className="flex flex-col md:flex-row h-screen w-full overflow-y-auto md:overflow-hidden bg-[#090a0d] text-white font-sans">
         
         {/* STAGE 1 SIDEBAR */}
-        <aside className="w-64 shrink-0 border-r border-white/10 bg-[#12141a] p-4 flex flex-col justify-between overflow-y-auto no-print">
+        <aside className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-white/10 bg-[#12141a] p-4 flex flex-col justify-between overflow-x-auto md:overflow-y-auto no-print">
           <div className="space-y-6">
             
             {/* Brand Header */}
@@ -930,102 +931,18 @@ export function WorkspaceView() {
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[#141518] text-white font-sans">
       
-      {/* ==================================================================== */}
-      {/* TOP SANDBOX NAVBAR (Relevant SentinelAI Cyber Defense Header)         */}
-      {/* ==================================================================== */}
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-white/10 bg-[#1b1c20] px-4 text-xs font-medium text-zinc-300">
-        
-        {/* Top Left: Logo / Title + Mode Selector */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white font-bold text-xs shadow-sm">
-              <ShieldCheck className="h-3.5 w-3.5" />
-            </div>
-            <span className="font-semibold text-white">SentinelAI Security Twin</span>
-            <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
-          </div>
-          <span className="hidden md:inline-block text-[11px] text-zinc-400 font-mono">Live Twin Active • Real-time Threat Sync</span>
 
-          {/* Mode Toggles */}
-          <div className="hidden lg:flex items-center gap-1 ml-4 border-l border-white/10 pl-4">
-            <button
-              onClick={() => setActiveStepTab('overview')}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                activeStepTab === 'overview' ? 'bg-blue-600 text-white' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Globe className="h-3.5 w-3.5" /> Twin Graph
-            </button>
-            <button
-              onClick={() => setActiveStepTab('code')}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                activeStepTab === 'code' ? 'bg-blue-600 text-white' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <FileCode className="h-3.5 w-3.5" /> Patch Code
-            </button>
-            <button
-              onClick={() => setActiveStepTab('paths')}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                activeStepTab === 'paths' ? 'bg-blue-600 text-white' : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              <Layers className="h-3.5 w-3.5" /> Threat Intel
-            </button>
-          </div>
-        </div>
-
-        {/* Top Middle: URL / Page Display & Preview Controls */}
-        <div className="hidden sm:flex items-center gap-2">
-          <button className="rounded p-1 text-zinc-400 hover:bg-white/5 hover:text-white" title="Responsive Device Toggle">
-            <Monitor className="h-4 w-4" />
-          </button>
-          <button className="rounded p-1 text-zinc-400 hover:bg-white/5 hover:text-white" title="Re-sync Threat Engine">
-            <RotateCw className="h-3.5 w-3.5" />
-          </button>
-          <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/40 px-3 py-1 text-[11px] text-zinc-200 font-mono">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Cyber Twin Overview</span>
-            <ChevronDown className="h-3 w-3 text-zinc-500" />
-          </div>
-          <button className="rounded p-1 text-zinc-400 hover:bg-white/5 hover:text-white" title="Popout Inspection">
-            <ExternalLink className="h-3.5 w-3.5" />
-          </button>
-        </div>
-
-        {/* Top Right: User & Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 text-[11px] font-bold text-white shadow" title="Moksh (Security Architect)">
-            M
-          </div>
-          <button
-            onClick={() => exportReportJson(reportData())}
-            className="hidden sm:flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-zinc-200 hover:bg-white/10 transition-colors"
-          >
-            <Share2 className="h-3.5 w-3.5" /> Export Audit Report
-          </button>
-          <button className="flex items-center gap-1 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:brightness-110">
-            <Zap className="h-3.5 w-3.5 fill-current text-amber-300" /> Pro Threat Engine
-          </button>
-          <button
-            onClick={() => setActiveStepTab('code')}
-            className="rounded-full bg-gradient-to-r from-blue-600 to-purple-600 px-3.5 py-1 text-xs font-semibold text-white shadow hover:from-blue-500 hover:to-purple-500 transition-all"
-          >
-            Deploy Remediations
-          </button>
-        </div>
-      </header>
 
       {/* ==================================================================== */}
       {/* MAIN BODY SPLIT SCREEN                                               */}
       {/* Left (38%): Chat Interface | Right (62%): Current Feature Going On    */}
       {/* ==================================================================== */}
-      <div className="flex flex-1 min-h-0 w-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 w-full overflow-y-auto lg:overflow-hidden">
         
         {/* ================================================================== */}
         {/* LEFT HAND SIDE: CHAT INTERFACE (MATCHING REFERENCE IMAGE)          */}
         {/* ================================================================== */}
-        <div className="w-full lg:w-[420px] xl:w-[460px] shrink-0 border-r border-white/10 bg-[#16171a] flex flex-col justify-between overflow-hidden">
+        <div className="w-full lg:w-[420px] xl:w-[460px] h-[480px] lg:h-full shrink-0 border-b lg:border-b-0 lg:border-r border-white/10 bg-[#16171a] flex flex-col justify-between overflow-hidden">
           
           {/* Scrollable Chat Message Stream */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -1163,7 +1080,7 @@ export function WorkspaceView() {
                 type="text"
                 value={chatInputText}
                 onChange={(e) => setChatInputText(e.target.value)}
-                placeholder="Tell Lovable what to do instead..."
+                placeholder="Tell Sentinel what to do instead..."
                 className="w-full bg-transparent px-3 py-1.5 text-xs text-white outline-none placeholder:text-zinc-500"
               />
 
@@ -1255,13 +1172,27 @@ export function WorkspaceView() {
               })}
             </div>
 
-            {/* Feature Status Badge */}
-            <div className="flex items-center gap-3 shrink-0 ml-2">
-              <span className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-mono">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                Live Twin Running
-              </span>
-              <RiskGauge score={riskScore} size={36} />
+            {/* Feature Status & Risk Score Widget */}
+            <div className="flex items-center gap-3.5 shrink-0 ml-2 rounded-2xl border border-white/15 bg-zinc-950/90 px-3.5 py-1.5 shadow-2xl shadow-black">
+              <div className="flex flex-col text-right">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 leading-none">Environment Risk</span>
+                <div className="flex items-center justify-end gap-1.5 mt-1">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[11px] font-mono font-semibold text-emerald-400">Live Twin</span>
+                </div>
+              </div>
+              <div className="border-l border-white/15 pl-3 flex items-center gap-3">
+                <RiskGauge score={riskScore} size={60} />
+                <div className="flex flex-col justify-center leading-tight">
+                  <span
+                    className="text-xs font-black uppercase tracking-wider"
+                    style={{ color: riskScore > 70 ? '#f43f5e' : riskScore > 40 ? '#fb923c' : '#34d399' }}
+                  >
+                    {riskScore > 70 ? 'Critical Threat' : riskScore > 40 ? 'High Threat' : 'Low Risk'}
+                  </span>
+                  <span className="text-[10px] font-medium text-zinc-400 mt-0.5">Calculated Posture</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1363,7 +1294,10 @@ export function WorkspaceView() {
                   <h3 className="text-base font-semibold text-white flex items-center gap-2">
                     <ShieldAlert className="h-5 w-5 text-rose-500" /> Red Team Discovered Attack Chains
                   </h3>
-                  <Badge tone="critical">Environment Risk: {riskScore}/100</Badge>
+                  <div className="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-500/30 px-3 py-1 text-xs font-bold text-rose-300 shadow-sm">
+                    <span>Environment Risk:</span>
+                    <span className="text-sm font-black text-rose-400 font-mono">{riskScore} / 100</span>
+                  </div>
                 </div>
 
                 {agentPhases.length > 0 && (
@@ -1647,18 +1581,35 @@ export function WorkspaceView() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
-                  <Card className="p-4 text-center border-white/10">
-                    <span className="text-[11px] text-zinc-400">Initial Risk</span>
-                    <p className="text-2xl font-bold text-rose-400 mt-1">{riskScoreBefore}/100</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Card className="p-5 flex flex-col items-center justify-center text-center border-white/10 bg-black/40 space-y-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Initial Risk Score</span>
+                    <div className="flex items-center gap-3 mt-1">
+                      <RiskGauge score={riskScoreBefore || 88} size={64} />
+                      <div className="flex flex-col text-left">
+                        <span className="text-2xl font-black text-rose-400">{riskScoreBefore || 88}</span>
+                        <span className="text-[10px] uppercase font-semibold text-zinc-500">out of 100</span>
+                      </div>
+                    </div>
                   </Card>
-                  <Card className="p-4 text-center border-white/10">
-                    <span className="text-[11px] text-zinc-400">Post-Patch Risk</span>
-                    <p className="text-2xl font-bold text-emerald-400 mt-1">{riskScore}/100</p>
+                  
+                  <Card className="p-5 flex flex-col items-center justify-center text-center border-emerald-500/30 bg-emerald-950/10 space-y-2 shadow-lg shadow-emerald-500/5">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">Post-Patch Risk Score</span>
+                    <div className="flex items-center gap-3 mt-1">
+                      <RiskGauge score={riskScore} size={64} />
+                      <div className="flex flex-col text-left">
+                        <span className="text-2xl font-black text-emerald-400">{riskScore}</span>
+                        <span className="text-[10px] uppercase font-semibold text-zinc-500">out of 100</span>
+                      </div>
+                    </div>
                   </Card>
-                  <Card className="p-4 text-center border-white/10">
-                    <span className="text-[11px] text-zinc-400">Risk Reduction</span>
-                    <p className="text-2xl font-bold text-blue-400 mt-1">{reduction}%</p>
+
+                  <Card className="p-5 flex flex-col items-center justify-center text-center border-blue-500/30 bg-blue-950/10 space-y-2 shadow-lg shadow-blue-500/5">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-400">Threat Risk Reduction</span>
+                    <div className="flex flex-col items-center justify-center pt-1">
+                      <span className="text-3xl font-black text-blue-400">{reduction}%</span>
+                      <span className="text-[10px] uppercase font-semibold text-zinc-400 mt-1">Mitigated Score</span>
+                    </div>
                   </Card>
                 </div>
 
@@ -1668,10 +1619,71 @@ export function WorkspaceView() {
                       <h4 className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Executive Summary</h4>
                       <p className="text-xs text-zinc-300 leading-relaxed">{report.executive_summary}</p>
                     </Card>
+
+                    {report.risk_posture && (
+                      <Card className="p-4 space-y-2 border-white/10">
+                        <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Risk Posture</h4>
+                        <p className="text-xs text-zinc-300 leading-relaxed">{report.risk_posture}</p>
+                      </Card>
+                    )}
+
+                    {report.key_findings && report.key_findings.length > 0 && (
+                      <Card className="p-4 space-y-2 border-white/10">
+                        <h4 className="text-xs font-semibold text-rose-400 uppercase tracking-wider">Key Findings</h4>
+                        <ul className="space-y-1.5">
+                          {report.key_findings.map((f, i) => (
+                            <li key={i} className="flex gap-2 text-xs text-zinc-300 leading-relaxed">
+                              <span className="mt-0.5 text-rose-400">•</span><span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </Card>
+                    )}
+
+                    {report.attack_narrative && (
+                      <Card className="p-4 space-y-2 border-white/10">
+                        <h4 className="text-xs font-semibold text-orange-400 uppercase tracking-wider">Attack Narrative</h4>
+                        <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">{report.attack_narrative}</p>
+                      </Card>
+                    )}
+
                     <Card className="p-4 space-y-2 border-white/10">
                       <h4 className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Projected Business Impact</h4>
                       <p className="text-xs text-zinc-300 leading-relaxed">{report.business_impact}</p>
                     </Card>
+
+                    {report.remediation_roadmap && report.remediation_roadmap.length > 0 && (
+                      <Card className="p-4 space-y-2 border-white/10">
+                        <h4 className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Remediation Roadmap</h4>
+                        <ol className="space-y-1.5">
+                          {report.remediation_roadmap.map((step, i) => (
+                            <li key={i} className="flex gap-2 text-xs text-zinc-300 leading-relaxed">
+                              <span className="mt-0.5 font-semibold text-emerald-400">{i + 1}.</span><span>{step}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </Card>
+                    )}
+
+                    {report.compliance_notes && (
+                      <Card className="p-4 space-y-2 border-white/10">
+                        <h4 className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Compliance & Framework Mapping</h4>
+                        <p className="text-xs text-zinc-300 leading-relaxed">{report.compliance_notes}</p>
+                      </Card>
+                    )}
+
+                    {report.next_steps && report.next_steps.length > 0 && (
+                      <Card className="p-4 space-y-2 border-white/10">
+                        <h4 className="text-xs font-semibold text-violet-400 uppercase tracking-wider">Recommended Next Steps</h4>
+                        <ul className="space-y-1.5">
+                          {report.next_steps.map((s, i) => (
+                            <li key={i} className="flex gap-2 text-xs text-zinc-300 leading-relaxed">
+                              <span className="mt-0.5 text-violet-400">→</span><span>{s}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </Card>
+                    )}
                   </div>
                 )}
               </div>

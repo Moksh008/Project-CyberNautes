@@ -38,7 +38,13 @@ class DefenseOutput(BaseModel):
 
 class ReportOutput(BaseModel):
     executive_summary: str
+    risk_posture: str = ""          # deeper narrative on the overall security posture
+    key_findings: list[str] = []    # 3-5 headline findings, each naming CVE + asset + severity
+    attack_narrative: str = ""      # plain-language story of how a breach unfolds
     business_impact: str
+    remediation_roadmap: list[str] = []  # phased, prioritized plan (Immediate / Short-term / Long-term)
+    compliance_notes: str = ""      # mapping to MITRE ATT&CK / common control frameworks
+    next_steps: list[str] = []      # concrete actions the stakeholder should take now
 
 
 class AgentState(TypedDict):
@@ -110,19 +116,35 @@ Also provide:
 
 def report_node(state: AgentState) -> dict:
     structured_llm = _llm().with_structured_output(ReportOutput)
-    prompt = f"""Write a security assessment summary for a non-technical stakeholder.
+    prompt = f"""You are the lead author of a board-level security assessment. Write a thorough report that a
+non-technical stakeholder can act on, while staying precise enough for their security team.
 
 Risk score: {state['risk_score']} (out of 100)
+Attack paths (ranked, with CVEs per path): {state['attack_paths']}
 Offense analysis: {state['offense_analysis']}
 Recommendations: {state['recommendations']}
-CVEs proven live in our Docker sandbox: {SANDBOX_VERIFIABLE_CVES}
+CVEs proven live in our Docker sandbox (real exploit + patch test, not just scanner-flagged): {SANDBOX_VERIFIABLE_CVES}
+
+Ground every claim in the data above. Cite exact CVE IDs and asset names. Where a finding is sandbox-verifiable,
+say it was proven with a live exploit in an isolated sandbox; otherwise say it is based on NVD version matching.
 
 Produce:
-- executive_summary: 2-3 sentences on the current risk posture. State the risk score, name the single most
-  critical exposure (with its CVE ID and affected asset), and note that at least one finding was proven with
-  a live exploit in an isolated sandbox (not just flagged by a scanner) where applicable.
-- business_impact: 1-2 concrete sentences on what an attacker gains if nothing is fixed (e.g. data theft,
-  remote code execution, full server control) — tie it to the specific compromised assets, not generic risk.
+- executive_summary: 4-6 sentences on the current risk posture. State the risk score and what it means, name the
+  single most critical exposure (CVE ID + affected asset), quantify scope (number of attack paths / unique CVEs),
+  and note which findings were proven with a live sandbox exploit vs. flagged theoretically.
+- risk_posture: a deeper narrative paragraph on the overall security posture — where the environment is weakest,
+  how exposed the internet-facing entry points are, and whether the risk is concentrated or spread across assets.
+- key_findings: 3-5 headline findings. Each item is one sentence naming the CVE ID, the affected asset, its
+  severity, and whether it is sandbox-verified or theoretical.
+- attack_narrative: a plain-language step-by-step story of how a real breach unfolds through the highest-risk
+  path — from initial access to impact — so a non-technical reader can picture the attack.
+- business_impact: 2-3 concrete sentences on what an attacker gains if nothing is fixed (data theft, remote code
+  execution, full server control, lateral movement) — tie it to the specific compromised assets, not generic risk.
+- remediation_roadmap: a phased plan as 3-5 items, each prefixed with its horizon
+  ("Immediate:", "Short-term:", "Long-term:"), describing what to fix and which attack paths it closes.
+- compliance_notes: 1-2 sentences mapping the findings to relevant frameworks (e.g. MITRE ATT&CK techniques
+  implicated, or common control gaps such as patch management and network segmentation).
+- next_steps: 3-4 concrete actions the stakeholder should authorize now, in priority order.
 """
     result = structured_llm.invoke(prompt)
     return {"report": result}
