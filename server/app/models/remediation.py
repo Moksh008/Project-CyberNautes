@@ -31,3 +31,16 @@ class CodeGenRequest(BaseModel):
     twin_id: str
     recommendations: list[dict]
     format: str  # "bash" | "ansible" | "git_diff"
+
+
+class OpenPRRequest(BaseModel):
+    repo_url: str
+    code: str
+    format: str  # "bash" | "ansible" | "git_diff"
+    title: Optional[str] = None
+    body: Optional[str] = None
+
+
+class ManifestPRRequest(BaseModel):
+    repo_url: str
+    twin_id: str

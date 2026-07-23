@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = None
     GOOGLE_API_KEY: Optional[str] = None
     NVD_API_KEY: Optional[str] = None
+    GITHUB_TOKEN: Optional[str] = None
     
     # Firebase
     FIREBASE_CREDENTIALS_PATH: Optional[str] = None

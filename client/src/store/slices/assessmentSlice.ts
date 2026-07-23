@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { ingestInfrastructure, type InfrastructurePayload } from '../../api/ingest';
-import { triggerAnalysis, recomputeRisk, type AnalyzeResponse, type AttackPath, type Recommendation, type OffenseAnalysis, type ReportOutput } from '../../api/analyze';
+import { ingestInfrastructure, ingestGithubRepo, type InfrastructurePayload, type GithubScanSummary } from '../../api/ingest';
+import { triggerAnalysis, recomputeRisk, type AnalyzeResponse, type AttackPath, type Recommendation, type OffenseAnalysis, type ReportOutput, type AgentPhase } from '../../api/analyze';
 
 export type AssessmentStatus =
   | 'idle'
@@ -23,6 +23,8 @@ interface AssessmentState {
   recommendations: Recommendation[];
   report: ReportOutput | null;
   verifiedCves: string[];
+  scanSummary: GithubScanSummary | null;
+  agentPhases: AgentPhase[];
 }
 
 const initialState: AssessmentState = {
@@ -39,6 +41,8 @@ const initialState: AssessmentState = {
   recommendations: [],
   report: null,
   verifiedCves: [],
+  scanSummary: null,
+  agentPhases: [],
 };
 
 export const ingestAndAnalyze = createAsyncThunk(
@@ -48,6 +52,20 @@ export const ingestAndAnalyze = createAsyncThunk(
       const { twin_id } = await ingestInfrastructure(payload);
       const analysis: AnalyzeResponse = await triggerAnalysis(twin_id);
       return { twin_id, payload, analysis };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      return rejectWithValue(msg);
+    }
+  },
+);
+
+export const ingestGithubAndAnalyze = createAsyncThunk(
+  'assessment/ingestGithubAndAnalyze',
+  async (repoUrl: string, { rejectWithValue }) => {
+    try {
+      const { twin_id, payload, scan_summary } = await ingestGithubRepo(repoUrl);
+      const analysis: AnalyzeResponse = await triggerAnalysis(twin_id);
+      return { twin_id, payload, analysis, scan_summary };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       return rejectWithValue(msg);
@@ -99,8 +117,36 @@ const assessmentSlice = createSlice({
         state.recommendations = analysis.recommendations;
         state.report = analysis.report;
         state.verifiedCves = [];
+        state.scanSummary = null;
+        state.agentPhases = analysis.agent_phases ?? [];
       })
       .addCase(ingestAndAnalyze.rejected, (state, action) => {
+        state.status = 'error';
+        state.error = action.payload as string;
+      })
+      // ingestGithubAndAnalyze
+      .addCase(ingestGithubAndAnalyze.pending, (state) => {
+        state.status = 'ingesting';
+        state.error = null;
+      })
+      .addCase(ingestGithubAndAnalyze.fulfilled, (state, action) => {
+        const { twin_id, payload, analysis, scan_summary } = action.payload;
+        state.status = 'done';
+        state.twinId = twin_id;
+        state.twinName = payload.name;
+        state.assets = payload.assets;
+        state.connections = payload.connections;
+        state.riskScore = analysis.risk_score;
+        state.riskScoreBefore = analysis.risk_score;
+        state.attackPaths = analysis.attack_paths;
+        state.offenseAnalysis = analysis.offense_analysis;
+        state.recommendations = analysis.recommendations;
+        state.report = analysis.report;
+        state.verifiedCves = [];
+        state.scanSummary = scan_summary;
+        state.agentPhases = analysis.agent_phases ?? [];
+      })
+      .addCase(ingestGithubAndAnalyze.rejected, (state, action) => {
         state.status = 'error';
         state.error = action.payload as string;
       })

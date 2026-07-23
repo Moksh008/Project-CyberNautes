@@ -47,3 +47,45 @@ export function generateCode(
     body: JSON.stringify({ twin_id, recommendations, format }),
   });
 }
+
+export interface OpenPRResponse {
+  pr_url: string;
+  branch: string;
+  base: string;
+}
+
+export function openPullRequest(
+  repo_url: string,
+  code: string,
+  format: 'bash' | 'ansible' | 'git_diff',
+  title?: string,
+  body?: string,
+): Promise<OpenPRResponse> {
+  return apiFetch<OpenPRResponse>('/api/remediation/pr', {
+    method: 'POST',
+    body: JSON.stringify({ repo_url, code, format, title, body }),
+  });
+}
+
+export interface ManifestFix {
+  package: string;
+  from: string;
+  to: string;
+  cves: string[];
+  file: string;
+}
+
+export interface ManifestPRResponse {
+  pr_url: string;
+  branch: string;
+  base: string;
+  fixes: ManifestFix[];
+  files_changed: string[];
+}
+
+export function openManifestFixPR(repo_url: string, twin_id: string): Promise<ManifestPRResponse> {
+  return apiFetch<ManifestPRResponse>('/api/remediation/manifest-pr', {
+    method: 'POST',
+    body: JSON.stringify({ repo_url, twin_id }),
+  });
+}

@@ -29,3 +29,7 @@ class InfrastructurePayload(BaseModel):
     name: str
     assets: list[Asset]
     connections: list[Connection] = Field(default_factory=list)
+
+
+class GithubIngestRequest(BaseModel):
+    repo_url: str
