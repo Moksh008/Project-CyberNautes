@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Native platform projects (regenerate with `npm run add:android` / `add:ios`)
+android/
+ios/
+
+# Web assets copied in by `cap sync`
+public/
+dist/
+
+# OS / editor
+.DS_Store
