@@ -65,8 +65,9 @@ const plans = [
     name: "Enterprise",
     description:
       "Advanced plan with enhanced security, custom SLAs, and air-gapped options for BFSI & large teams",
-    price: 39999,
-    yearlyPrice: 31999,
+    price: 0,
+    yearlyPrice: 0,
+    customPrice: true,
     buttonText: "Contact Sales",
     buttonVariant: "outline" as const,
     includes: [
@@ -282,20 +283,28 @@ export default function PricingSection6() {
                     )}
                   </div>
                   <div className="flex items-baseline my-3">
-                    <span className="text-3xl md:text-4xl font-bold flex items-center tracking-tight">
-                      ₹
-                      <NumberFlow
-                        format={{
-                          notation: "standard",
-                          useGrouping: true,
-                        }}
-                        value={isYearly ? plan.yearlyPrice : plan.price}
-                        className="text-3xl md:text-4xl font-bold inline-block ml-0.5"
-                      />
-                    </span>
-                    <span className="text-gray-400 text-sm ml-1 font-normal">
-                      /mo
-                    </span>
+                    {plan.name === "Enterprise" ? (
+                      <span className="text-3xl md:text-4xl font-bold tracking-tight text-white">
+                        Custom
+                      </span>
+                    ) : (
+                      <>
+                        <span className="text-3xl md:text-4xl font-bold flex items-center tracking-tight">
+                          ₹
+                          <NumberFlow
+                            format={{
+                              notation: "standard",
+                              useGrouping: true,
+                            }}
+                            value={isYearly ? plan.yearlyPrice : plan.price}
+                            className="text-3xl md:text-4xl font-bold inline-block ml-0.5"
+                          />
+                        </span>
+                        <span className="text-gray-400 text-sm ml-1 font-normal">
+                          /mo
+                        </span>
+                      </>
+                    )}
                   </div>
                   <p className="text-xs text-gray-400 min-h-[36px] leading-relaxed">{plan.description}</p>
                 </CardHeader>
