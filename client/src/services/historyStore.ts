@@ -5,7 +5,6 @@
 import { initFirestore } from '../config/firebase';
 import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import {
-  getScans as lsGetScans,
   upsertScan as lsUpsert,
   clearScans as lsClear,
   getSettings as lsGetSettings,
