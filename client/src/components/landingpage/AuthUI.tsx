@@ -5,10 +5,9 @@ import { useState, useId, useEffect } from "react";
 import { Slot } from "@radix-ui/react-slot";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Eye, EyeOff, ShieldCheck, Box, Sparkles, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import { initFirebase } from "../../config/firebase";
 import { 
@@ -19,27 +18,7 @@ import {
   signInWithPopup, 
   type Auth 
 } from "firebase/auth";
-import "@google/model-viewer";
-
-interface ModelViewerProps extends React.HTMLAttributes<HTMLElement> {
-  src?: string;
-  alt?: string;
-  "auto-rotate"?: boolean | string;
-  "camera-controls"?: boolean | string;
-  "shadow-intensity"?: string;
-  "shadow-softness"?: string;
-  "environment-image"?: string;
-  exposure?: string;
-  "auto-rotate-delay"?: string | number;
-  "rotation-per-second"?: string;
-  "touch-action"?: string;
-  poster?: string;
-  loading?: "auto" | "lazy" | "eager";
-}
-
-function ModelViewer(props: ModelViewerProps) {
-  return React.createElement("model-viewer", props);
-}
+import { CyberTwin3DCanvas } from "./CyberTwin3DCanvas";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -438,46 +417,14 @@ function AuthFormContainer({
   );
 }
 
-const allModelPresets = [
-  {
-    name: "Cyber Defense Helmet",
-    src: "/models/helmet.glb",
-    quote: "SentinelAI Cyber Defense Twin active. Interactive 3D threat surface analysis ready.",
-    author: "SentinelAI Defense Engine",
-  },
-  {
-    name: "Autonomous AI Agent",
-    src: "/models/robot.glb",
-    quote: "Deploying Autonomous Multi-Agent Threat Neutralization Engine.",
-    author: "SentinelAI Infrastructure Core",
-  },
-  {
-    name: "3D Astronaut Explorer",
-    src: "/models/astronaut.glb",
-    quote: "Exploring unmapped digital asset universes with zero-day reachability.",
-    author: "SentinelAI Red-Team Range",
-  },
-];
-
 export function AuthUI() {
   const [isSignIn, setIsSignIn] = useState(true);
-  const [modelIndex, setModelIndex] = useState(0);
-
-  const toggleForm = () => {
-    setIsSignIn((prev) => {
-      const nextState = !prev;
-      // Set appropriate 3D model preset based on view
-      setModelIndex(nextState ? 0 : 1);
-      return nextState;
-    });
-  };
+  const toggleForm = () => setIsSignIn((prev) => !prev);
 
   const [auth, setAuth] = useState<Auth | null>(null);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [configError, setConfigError] = useState<string | null>(null);
   const navigate = useNavigate();
-
-  const currentModel = allModelPresets[modelIndex % allModelPresets.length];
 
   useEffect(() => {
     let active = true;
@@ -539,74 +486,9 @@ export function AuthUI() {
         ) : null}
       </div>
 
-      {/* Right Column: 3D GLB Model Viewer Canvas */}
+      {/* Right Column: Project-Relevant 3D Cyber Defense Visualizer */}
       <div className="hidden md:block md:col-span-6 lg:col-span-7 relative bg-gradient-to-br from-zinc-950 via-black to-blue-950/40 border-l border-white/10 overflow-hidden">
-        {/* Background Grid & Lighting */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/15 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/15 blur-[120px] rounded-full pointer-events-none" />
-
-        {/* 3D GLB Top Controls Overlay */}
-        <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-30 pointer-events-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-black/60 backdrop-blur-md text-xs font-mono text-zinc-300">
-            <Box size={14} className="text-blue-400 animate-pulse" /> 3D GLB Canvas ({currentModel.name})
-          </div>
-          <button
-            onClick={() => setModelIndex((prev) => prev + 1)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-black/60 hover:bg-white/10 backdrop-blur-md text-xs font-medium text-zinc-300 cursor-pointer transition-colors"
-          >
-            <RefreshCw size={12} className="text-blue-400" /> Switch 3D Model
-          </button>
-        </div>
-
-        {/* 3D Model Viewer Component */}
-        <div className="w-full h-full flex items-center justify-center p-8 relative z-20">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentModel.src}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.5 }}
-              className="w-full h-[75vh] relative"
-            >
-              <ModelViewer
-                src={currentModel.src}
-                alt={currentModel.name}
-                auto-rotate
-                camera-controls
-                shadow-intensity="1.5"
-                shadow-softness="0.8"
-                environment-image="neutral"
-                exposure="1.2"
-                auto-rotate-delay="0"
-                rotation-per-second="25deg"
-                touch-action="pan-y"
-                loading="eager"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  backgroundColor: "transparent",
-                  outline: "none",
-                }}
-              />
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Floating Quote & Instructions Overlay */}
-        <div className="absolute bottom-8 inset-x-8 z-30 pointer-events-none text-center">
-          <div className="inline-block p-4 rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl max-w-lg shadow-2xl">
-            <p className="text-sm font-medium text-zinc-200 leading-relaxed mb-1">
-              "<Typewriter key={currentModel.quote} text={currentModel.quote} speed={40} />"
-            </p>
-            <div className="flex items-center justify-center gap-2 text-xs font-mono text-zinc-400">
-              <Sparkles size={12} className="text-blue-400" /> {currentModel.author}
-              <span className="text-zinc-600">|</span>
-              <span className="text-zinc-500">Drag to rotate 360°</span>
-            </div>
-          </div>
-        </div>
+        <CyberTwin3DCanvas isSignIn={isSignIn} />
       </div>
     </div>
   );

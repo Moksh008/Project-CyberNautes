@@ -2,6 +2,7 @@
 # dependency manifests, so a repo can be fed through the same digital-twin /
 # threat-intel / attack-path pipeline as a manually-described JSON environment.
 
+import contextvars
 import io
 import json
 import logging
@@ -16,6 +17,26 @@ from ..core.config import settings
 from ..models.infrastructure import Asset, InfrastructurePayload, Software
 
 logger = logging.getLogger(__name__)
+
+# Per-request GitHub token override (e.g. a user-supplied PAT from the client).
+# Falls back to the server-configured GITHUB_TOKEN when unset.
+_token_override: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "github_token_override", default=None
+)
+
+
+def active_github_token() -> str | None:
+    """The token to use for GitHub calls: request override, else server config."""
+    return _token_override.get() or settings.GITHUB_TOKEN
+
+
+def set_token_override(token: str | None):
+    """Set the per-request token override. Returns a token handle for reset()."""
+    return _token_override.set(token or None)
+
+
+def reset_token_override(handle) -> None:
+    _token_override.reset(handle)
 
 # Caps the number of NVD lookups triggered per scan so ingestion stays fast.
 MAX_SOFTWARE_PER_ASSET = 25
@@ -41,8 +62,9 @@ def _parse_repo_url(repo_url: str) -> tuple[str, str]:
 
 def _github_headers() -> dict:
     headers = {"User-Agent": "SentinelAI-CyberTwin/1.0", "Accept": "application/vnd.github+json"}
-    if settings.GITHUB_TOKEN:
-        headers["Authorization"] = f"Bearer {settings.GITHUB_TOKEN}"
+    token = active_github_token()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     return headers
 
 

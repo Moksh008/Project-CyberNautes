@@ -60,10 +60,11 @@ export function openPullRequest(
   format: 'bash' | 'ansible' | 'git_diff',
   title?: string,
   body?: string,
+  github_token?: string,
 ): Promise<OpenPRResponse> {
   return apiFetch<OpenPRResponse>('/api/remediation/pr', {
     method: 'POST',
-    body: JSON.stringify({ repo_url, code, format, title, body }),
+    body: JSON.stringify({ repo_url, code, format, title, body, github_token }),
   });
 }
 
@@ -83,9 +84,9 @@ export interface ManifestPRResponse {
   files_changed: string[];
 }
 
-export function openManifestFixPR(repo_url: string, twin_id: string): Promise<ManifestPRResponse> {
+export function openManifestFixPR(repo_url: string, twin_id: string, github_token?: string): Promise<ManifestPRResponse> {
   return apiFetch<ManifestPRResponse>('/api/remediation/manifest-pr', {
     method: 'POST',
-    body: JSON.stringify({ repo_url, twin_id }),
+    body: JSON.stringify({ repo_url, twin_id, github_token }),
   });
 }

@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { initFirebase, getAuthInstance } from '../../../config/firebase';
+import { BASE_URL } from '../../../api/client';
+import { onAuthStateChanged, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { ingestAndAnalyze, ingestGithubAndAnalyze, addVerifiedCve, recomputeAfterPatch } from '../../../store/slices/assessmentSlice';
 import { toggleId, saveSelection, setFormat, generateRemediationCode } from '../../../store/slices/remediationSlice';
@@ -7,6 +10,8 @@ import type { InfrastructurePayload } from '../../../api/ingest';
 import sampleInfra from '../../../data/sample_infra.json';
 import { SUPPORTED_SANDBOX_CVES } from '../../../data/sandboxCves';
 import { buildReportData, exportReportJson, exportFindingsCsv } from '../../../utils/exportReport';
+import { getScans, getSettings, getGithubToken, saveGithubToken, type ScanRecord, type AppSettings } from '../../../utils/scanHistory';
+import { loadScans, saveScan, clearAllScans, loadSettings, persistSettings } from '../../../services/historyStore';
 import { openPullRequest, openManifestFixPR, type ManifestFix } from '../../../api/remediation';
 import {
   UploadCloud, FileCode, Play, AlertCircle, CheckCircle2, RefreshCw,
@@ -15,9 +20,10 @@ import {
   ChevronDown, X, Plus, Mic,
   MessageSquare, Pencil, Type, Focus,
   ChevronLeft, ChevronRight, ArrowUp,
-  History, User, Key, Settings, Clock, Database, Cpu
+  History, User, Key, Settings, Clock, LogOut
 } from 'lucide-react';
 import { Card, Badge, RiskGauge, HopChain, CveIntelCard, AgentPhaseTimeline } from '../../ui';
+import DarkVeil from '../../ui/DarkVeil';
 
 interface AssetShape {
   id: string;
@@ -49,6 +55,65 @@ export function WorkspaceView() {
   const remediation = useAppSelector((state) => state.remediation);
   const sandbox = useAppSelector((state) => state.sandbox);
 
+  // Firebase Auth state for dynamic user details
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    initFirebase()
+      .then((auth) => {
+        if (auth.currentUser) {
+          setCurrentUser(auth.currentUser);
+        }
+        unsubscribe = onAuthStateChanged(auth, (user) => {
+          setCurrentUser(user);
+        });
+      })
+      .catch((err) => {
+        console.warn("Firebase auth listener failed in WorkspaceView:", err);
+      });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      const auth = await initFirebase();
+      await signOut(auth);
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
+
+  const rawUserName = currentUser?.displayName
+    || (currentUser?.email ? currentUser.email.split('@')[0] : 'Analyst');
+  const capitalizedUserName = rawUserName.charAt(0).toUpperCase() + rawUserName.slice(1);
+  const userInitial = capitalizedUserName.charAt(0).toUpperCase();
+  const userEmail = currentUser?.email || 'SecOps Lead • Pro';
+
+  // Real Firebase account metadata
+  const fmtDate = (iso?: string) => (iso ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—');
+  const memberSince = fmtDate(currentUser?.metadata?.creationTime);
+  const lastSignIn = fmtDate(currentUser?.metadata?.lastSignInTime);
+  const providerId = currentUser?.providerData?.[0]?.providerId || 'password';
+  const providerLabel = providerId === 'google.com' ? 'Google' : providerId === 'github.com' ? 'GitHub' : 'Email / Password';
+  const firebaseProject = getAuthInstance()?.app?.options?.projectId || null;
+
+  // Live backend health probe (real /health endpoint)
+  const [backendHealth, setBackendHealth] = useState<{ status: string; environment?: string } | null>(null);
+  const [backendUp, setBackendUp] = useState<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    fetch(`${BASE_URL}/health`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((data) => { if (active) { setBackendHealth(data); setBackendUp(true); } })
+      .catch(() => { if (active) setBackendUp(false); });
+    return () => { active = false; };
+  }, []);
+
   const {
     status, error: assessError, twinId, twinName, assets, connections,
     riskScore, riskScoreBefore, attackPaths, offenseAnalysis, recommendations,
@@ -74,6 +139,52 @@ export function WorkspaceView() {
   const [prState, setPrState] = useState<{ loading: boolean; url: string | null; error: string | null }>({ loading: false, url: null, error: null });
   const [depPrState, setDepPrState] = useState<{ loading: boolean; url: string | null; error: string | null; fixes: ManifestFix[] }>({ loading: false, url: null, error: null, fixes: [] });
   const [copied, setCopied] = useState(false);
+
+  // Scan history + preferences — persisted in Firestore per-user, cached locally
+  const [scanHistory, setScanHistory] = useState<ScanRecord[]>(() => getScans());
+  const [appSettings, setAppSettings] = useState<AppSettings>(() => getSettings());
+  const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'local'>('checking');
+  const uid = currentUser?.uid ?? null;
+
+  // GitHub PAT for opening PRs — stored only in this browser (never in Firestore)
+  const [githubToken, setGithubToken] = useState<string>(() => getGithubToken());
+  const [tokenDraft, setTokenDraft] = useState<string>('');
+
+  const handleSaveToken = () => {
+    saveGithubToken(tokenDraft.trim());
+    setGithubToken(tokenDraft.trim());
+    setTokenDraft('');
+  };
+
+  const handleClearToken = () => {
+    saveGithubToken('');
+    setGithubToken('');
+    setTokenDraft('');
+  };
+
+  const updateSetting = (patch: Partial<AppSettings>) => {
+    setAppSettings((prev) => {
+      const next = { ...prev, ...patch };
+      persistSettings(uid, next);
+      return next;
+    });
+  };
+
+  // Hydrate history + settings from Firestore (falls back to local cache)
+  useEffect(() => {
+    let active = true;
+    setDbStatus('checking');
+    loadSettings(uid).then((s) => { if (active) setAppSettings(s); });
+    if (!uid) {
+      setScanHistory(getScans());
+      setDbStatus('local');
+      return () => { active = false; };
+    }
+    loadScans(uid)
+      .then((scans) => { if (active) { setScanHistory(scans); setDbStatus('connected'); } })
+      .catch(() => { if (active) { setScanHistory(getScans()); setDbStatus('local'); } });
+    return () => { active = false; };
+  }, [uid]);
 
   // Left panel interactive chat states
   const [isCardVisible, setIsCardVisible] = useState(true);
@@ -112,6 +223,26 @@ export function WorkspaceView() {
   const testableCves = SUPPORTED_SANDBOX_CVES.filter((c) => uniqueCveIds.has(c.cve));
   const selectedRecs = recommendations.filter((r) => r.id && selectedIds.includes(r.id));
   const reduction = riskScoreBefore > 0 ? Math.max(0, Math.round(((riskScoreBefore - riskScore) / riskScoreBefore) * 100)) : 0;
+
+  // Persist each completed scan (and later patch updates) to Firestore + local cache
+  useEffect(() => {
+    if (status !== 'done' || !twinId) return;
+    const record: ScanRecord = {
+      id: twinId,
+      name: twinName || 'Untitled Twin',
+      source: scanSummary ? 'github' : 'json',
+      repo: scanSummary ? `${scanSummary.owner}/${scanSummary.repo}` : undefined,
+      assetCount: typedAssets.length,
+      cveCount: uniqueCveIds.size,
+      verifiedCount: verifiedCves.length,
+      riskBefore: riskScoreBefore,
+      riskAfter: riskScore,
+      reduction,
+      timestamp: Date.now(),
+    };
+    setScanHistory((prev) => [record, ...prev.filter((s) => s.id !== record.id)]);
+    saveScan(uid, record);
+  }, [status, twinId, riskScore, verifiedCves.length]);
 
   const handleJsonChange = (val: string) => {
     setJsonText(val);
@@ -215,7 +346,7 @@ export function WorkspaceView() {
         ? `https://github.com/${scanSummary.owner}/${scanSummary.repo}`
         : 'https://github.com/Moksh008/SmartHire';
       const title = `SentinelAI: remediate ${uniqueCves.length} finding${uniqueCves.length === 1 ? '' : 's'}`;
-      const res = await openPullRequest(repoUrl, generatedCode, format, title, buildPrBody());
+      const res = await openPullRequest(repoUrl, generatedCode, format, title, buildPrBody(), githubToken || undefined);
       setPrState({ loading: false, url: res.pr_url, error: null });
       addAssistantMessage(`Pull request successfully opened: ${res.pr_url}`);
     } catch (err: unknown) {
@@ -231,7 +362,7 @@ export function WorkspaceView() {
         ? `https://github.com/${scanSummary.owner}/${scanSummary.repo}`
         : 'https://github.com/Moksh008/SmartHire';
       const targetTwin = twinId || 'twin-1';
-      const res = await openManifestFixPR(repoUrl, targetTwin);
+      const res = await openManifestFixPR(repoUrl, targetTwin, githubToken || undefined);
       setDepPrState({ loading: false, url: res.pr_url, error: null, fixes: res.fixes });
       addAssistantMessage(`Dependency-fix PR opened (${res.fixes.length} bumped): ${res.pr_url}`);
     } catch (err: unknown) {
@@ -490,29 +621,23 @@ export function WorkspaceView() {
       <div className="flex flex-col md:flex-row h-screen w-full overflow-y-auto md:overflow-hidden bg-[#090a0d] text-white font-sans">
         
         {/* STAGE 1 SIDEBAR */}
-        <aside className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-white/10 bg-[#12141a] p-4 flex flex-col justify-between overflow-x-auto md:overflow-y-auto no-print">
-          <div className="space-y-6">
-            
+        <aside className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-white/5 bg-gradient-to-b from-[#0c1022] to-[#0a0a14] p-4 flex flex-col justify-between overflow-x-auto md:overflow-y-auto no-print shadow-[8px_0_24px_rgba(0,0,0,0.4)] rounded-b-3xl md:rounded-b-none md:rounded-r-3xl">
+          <div className="space-y-8">
+
             {/* Brand Header */}
-            <div className="flex items-center gap-3 px-2 py-1">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 font-bold text-white shadow-lg">
-                <ShieldCheck className="h-5 w-5" />
+            <div className="flex items-center gap-3 px-1 pt-2 pb-1">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-lg shadow-black/40">
+                <ShieldCheck className="h-6 w-6 text-indigo-600" />
               </div>
-              <div>
-                <h2 className="text-sm font-bold text-white leading-none">SentinelAI</h2>
-                <span className="text-[10px] text-blue-400 font-mono">Cyber Twin Platform</span>
-              </div>
+              <h2 className="text-lg font-extrabold text-white leading-none tracking-tight">Sentinel<span className="bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">AI</span></h2>
             </div>
 
-            {/* Navigation Sidebar Tabs */}
-            <div className="space-y-1">
-              <span className="px-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Navigation</span>
+            {/* Primary Navigation Group */}
+            <nav className="space-y-2">
               {[
                 { id: 'new_assessment', label: 'New Scan & Upload', icon: UploadCloud },
-                { id: 'history', label: 'Scan History (4)', icon: History },
+                { id: 'history', label: 'Scan History', icon: History },
                 { id: 'profile', label: 'Analyst Profile', icon: User },
-                { id: 'api_keys', label: 'Threat Feeds & Keys', icon: Key },
-                { id: 'settings', label: 'Platform Settings', icon: Settings },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isActive = stage1Tab === tab.id;
@@ -520,61 +645,92 @@ export function WorkspaceView() {
                   <button
                     key={tab.id}
                     onClick={() => setStage1Tab(tab.id as any)}
-                    className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-all ${
-                      isActive
-                        ? 'bg-blue-600/20 text-white border border-blue-500/40 shadow-sm'
-                        : 'text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent'
+                    className={`group w-full flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-[15px] font-semibold transition-all ${
+                      isActive ? 'text-white' : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    <Icon className={`h-4 w-4 ${isActive ? 'text-blue-400' : 'text-zinc-500'}`} />
-                    <span>{tab.label}</span>
+                    <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-indigo-300' : 'text-slate-500 group-hover:text-slate-300'}`} strokeWidth={1.75} />
+                    <span className={isActive ? 'bg-gradient-to-r from-indigo-300 to-fuchsia-400 bg-clip-text text-transparent' : ''}>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* System Control Group */}
+            <div className="space-y-2">
+              <span className="px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">System Control</span>
+              {[
+                { id: 'settings', label: 'Platform Settings', icon: Settings },
+                { id: 'api_keys', label: 'Threat Feeds & Keys', icon: Key },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const isActive = stage1Tab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setStage1Tab(tab.id as any)}
+                    className={`group w-full flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-[15px] font-semibold transition-all ${
+                      isActive ? 'text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-indigo-300' : 'text-slate-500 group-hover:text-slate-300'}`} strokeWidth={1.75} />
+                    <span className={isActive ? 'bg-gradient-to-r from-indigo-300 to-fuchsia-400 bg-clip-text text-transparent' : ''}>{tab.label}</span>
                   </button>
                 );
               })}
             </div>
-
-            {/* System Status Tile */}
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-2">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-zinc-400 flex items-center gap-1.5"><Cpu className="h-3.5 w-3.5 text-blue-400" /> Multi-Agent AI</span>
-                <span className="text-emerald-400 font-mono text-[10px]">Online</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-zinc-400 flex items-center gap-1.5"><Database className="h-3.5 w-3.5 text-purple-400" /> Neo4j Graph</span>
-                <span className="text-emerald-400 font-mono text-[10px]">Ready</span>
-              </div>
-            </div>
           </div>
 
-          {/* User Profile Footer in Sidebar */}
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex items-center justify-between mt-4">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-xs font-bold text-white shadow">
-                M
-              </div>
+          {/* Bottom: Account + Logout */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5 rounded-lg px-3 py-2 overflow-hidden">
+              {currentUser?.photoURL ? (
+                <img src={currentUser.photoURL} alt={capitalizedUserName} className="h-8 w-8 shrink-0 rounded-full object-cover border border-white/20" />
+              ) : (
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-xs font-bold text-white shadow">
+                  {userInitial}
+                </div>
+              )}
               <div className="flex flex-col overflow-hidden">
-                <span className="truncate text-xs font-semibold text-white leading-none">Moksh</span>
-                <span className="truncate text-[10px] text-zinc-400 leading-tight">SecOps Lead • Pro</span>
+                <span className="truncate text-xs font-semibold text-white leading-none">{capitalizedUserName}</span>
+                <span className="truncate text-[10px] text-slate-400 leading-tight">{userEmail}</span>
               </div>
             </div>
-            <Badge tone="success" className="text-[9px]">Active</Badge>
+            <button
+              onClick={handleLogout}
+              className="group w-full flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-[15px] font-semibold text-rose-500 hover:text-rose-400 hover:bg-rose-500/5 transition-all"
+            >
+              <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.75} />
+              <span>Logout</span>
+            </button>
           </div>
         </aside>
 
         {/* STAGE 1 MAIN VIEW CANVAS */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-950/20 via-zinc-950 to-black relative">
+        <main className="flex-1 overflow-y-auto p-6 md:p-10 bg-black/40 relative">
+          {/* Animated DarkVeil Cyber WebGL Shader Background */}
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-50 overflow-hidden">
+            <DarkVeil 
+              hueShift={210} 
+              noiseIntensity={0.02} 
+              scanlineIntensity={0.1} 
+              speed={0.3} 
+              warpAmount={0.15} 
+              resolutionScale={1}
+            />
+          </div>
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[350px] bg-gradient-to-tr from-blue-500/20 via-purple-500/30 to-pink-500/20 blur-[120px] pointer-events-none rounded-full" />
 
           {/* TAB 1: NEW SCAN & UPLOAD (HERO PAGE) */}
           {stage1Tab === 'new_assessment' && (
-            <div className="max-w-4xl mx-auto flex flex-col items-center justify-center text-center space-y-6 pt-4">
+            <div className="max-w-4xl mx-auto flex flex-col items-center justify-center text-center space-y-6 pt-4 relative z-10">
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-300 shadow-inner">
                 <Sparkles className="h-3.5 w-3.5 text-blue-400 animate-pulse" />
                 <span>SentinelAI Engine ready • Multi-Agent Cyber Defense Twin</span>
               </div>
 
               <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white max-w-2xl leading-tight">
-                Let's defend your infrastructure, <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Moksh</span>
+                Let's defend your infrastructure, <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">{capitalizedUserName}</span>
               </h1>
               <p className="text-sm md:text-base text-zinc-400 max-w-xl">
                 Upload your infrastructure JSON or connect your GitHub repository to generate an interactive Digital Twin, map exploit paths, and detonate live sandbox patches.
@@ -720,65 +876,84 @@ export function WorkspaceView() {
 
           {/* TAB 2: SCAN HISTORY */}
           {stage1Tab === 'history' && (
-            <div className="max-w-4xl mx-auto space-y-6 text-left">
+            <div className="max-w-4xl mx-auto space-y-6 text-left relative z-10">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div>
                   <h2 className="text-xl font-bold text-white flex items-center gap-2">
                     <History className="h-5 w-5 text-blue-400" /> Recent Digital Twins & Audits
                   </h2>
-                  <p className="text-xs text-zinc-400 mt-1">Review past infrastructure threat assessments and saved digital twin models</p>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    {dbStatus === 'connected'
+                      ? 'Synced to your Firestore cloud account'
+                      : dbStatus === 'checking'
+                        ? 'Connecting to database…'
+                        : 'Saved locally in this browser (sign in to sync)'}
+                  </p>
                 </div>
-                <Badge tone="info" className="font-mono text-xs">4 Twins Saved</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge tone={dbStatus === 'connected' ? 'success' : 'medium'} className="text-xs">
+                    {dbStatus === 'connected' ? 'Cloud Synced' : dbStatus === 'checking' ? 'Syncing…' : 'Local Only'}
+                  </Badge>
+                  <Badge tone="info" className="font-mono text-xs">{scanHistory.length} Saved</Badge>
+                  {scanHistory.length > 0 && (
+                    <button
+                      onClick={() => { clearAllScans(uid); setScanHistory([]); }}
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/10"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-4">
-                {[
-                  { name: 'Acme Corp Production Infrastructure', assets: 4, risk: 88, cves: 3, time: '2 hours ago', status: 'Completed' },
-                  { name: 'E-Commerce Microservices Cluster', assets: 8, risk: 64, cves: 5, time: 'Yesterday at 4:15 PM', status: 'Verified' },
-                  { name: 'AWS VPC Gateway & DB Layer', assets: 12, risk: 92, cves: 7, time: '3 days ago', status: 'Patched' },
-                  { name: 'Kubernetes Ingress Controller', assets: 6, risk: 45, cves: 2, time: '5 days ago', status: 'Archived' },
-                ].map((item, idx) => (
-                  <Card key={idx} className="p-5 bg-zinc-950/80 border-white/10 hover:border-blue-500/40 transition-all space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/10 border border-blue-500/30 text-blue-400 font-bold text-xs">
-                          TWIN
+              {scanHistory.length === 0 ? (
+                <Card className="p-10 bg-zinc-950/80 border-white/10 flex flex-col items-center text-center gap-3">
+                  <History className="h-10 w-10 text-zinc-600" />
+                  <h3 className="text-sm font-semibold text-white">No scans yet</h3>
+                  <p className="text-xs text-zinc-400 max-w-sm">Run your first assessment from “New Scan &amp; Upload”. Completed scans will appear here.</p>
+                  <button
+                    onClick={() => setStage1Tab('new_assessment')}
+                    className="mt-1 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 transition-colors"
+                  >
+                    Start a New Scan
+                  </button>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {scanHistory.map((item) => (
+                    <Card key={item.id} className="p-5 bg-zinc-950/80 border-white/10 hover:border-blue-500/40 transition-all space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/10 border border-blue-500/30 text-blue-400 font-bold text-[10px]">
+                            {item.source === 'github' ? 'REPO' : 'JSON'}
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-white">{item.name}</h3>
+                            <span className="text-[11px] text-zinc-500 flex items-center gap-1 mt-0.5">
+                              <Clock className="h-3 w-3" /> {new Date(item.timestamp).toLocaleString()}
+                              {item.repo && <span className="font-mono text-zinc-600">• {item.repo}</span>}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-sm font-semibold text-white">{item.name}</h3>
-                          <span className="text-[11px] text-zinc-500 flex items-center gap-1 mt-0.5">
-                            <Clock className="h-3 w-3" /> {item.time}
-                          </span>
-                        </div>
+                        <Badge tone={item.riskAfter > 70 ? 'critical' : item.riskAfter > 40 ? 'high' : 'medium'}>Risk: {item.riskAfter}/100</Badge>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Badge tone={item.risk > 70 ? 'critical' : 'high'}>Risk Score: {item.risk}/100</Badge>
-                        <button
-                          onClick={() => {
-                            handleJsonChange(JSON.stringify(sampleInfra, null, 2));
-                            handleSubmit();
-                          }}
-                          className="rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 transition-colors"
-                        >
-                          Load Twin
-                        </button>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-6 pt-2 border-t border-white/5 text-xs text-zinc-400 font-mono">
-                      <span>Assets: <strong className="text-white">{item.assets}</strong></span>
-                      <span>CVEs Vector Mapped: <strong className="text-rose-400">{item.cves}</strong></span>
-                      <span>Status: <strong className="text-emerald-400">{item.status}</strong></span>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-1 pt-2 border-t border-white/5 text-xs text-zinc-400 font-mono">
+                        <span>Assets: <strong className="text-white">{item.assetCount}</strong></span>
+                        <span>CVEs Mapped: <strong className="text-rose-400">{item.cveCount}</strong></span>
+                        <span>Verified: <strong className="text-emerald-400">{item.verifiedCount}</strong></span>
+                        <span>Reduction: <strong className="text-blue-400">{item.reduction}%</strong></span>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {/* TAB 3: ANALYST PROFILE */}
           {stage1Tab === 'profile' && (
-            <div className="max-w-4xl mx-auto space-y-6 text-left">
+            <div className="max-w-4xl mx-auto space-y-6 text-left relative z-10">
               <div className="border-b border-white/10 pb-4">
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <User className="h-5 w-5 text-purple-400" /> Analyst Profile & Subscription
@@ -788,36 +963,59 @@ export function WorkspaceView() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="p-6 bg-zinc-950/80 border-white/10 md:col-span-1 flex flex-col items-center text-center space-y-4">
-                  <div className="h-20 w-20 rounded-full bg-gradient-to-tr from-blue-600 via-purple-600 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white shadow-xl">
-                    M
-                  </div>
+                  {currentUser?.photoURL ? (
+                    <img src={currentUser.photoURL} alt={capitalizedUserName} className="h-20 w-20 rounded-full object-cover shadow-xl border-2 border-purple-500/30" />
+                  ) : (
+                    <div className="h-20 w-20 rounded-full bg-gradient-to-tr from-blue-600 via-purple-600 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white shadow-xl">
+                      {userInitial}
+                    </div>
+                  )}
                   <div>
-                    <h3 className="text-lg font-bold text-white">Moksh</h3>
-                    <span className="text-xs text-purple-400 font-medium">Lead Security Architect</span>
+                    <h3 className="text-lg font-bold text-white">{capitalizedUserName}</h3>
+                    <span className="text-xs text-purple-400 font-medium">{userEmail}</span>
                   </div>
-                  <Badge tone="success" className="px-3 py-1 text-xs">Pro License Active</Badge>
+                  {currentUser ? (
+                    <Badge tone={currentUser.emailVerified ? 'success' : 'medium'} className="px-3 py-1 text-xs">
+                      {currentUser.emailVerified ? 'Email Verified' : 'Email Unverified'}
+                    </Badge>
+                  ) : (
+                    <Badge tone="medium" className="px-3 py-1 text-xs">Not Signed In</Badge>
+                  )}
+                  <div className="w-full space-y-2 pt-2 border-t border-white/10 text-left text-[11px] text-zinc-400">
+                    <div className="flex justify-between"><span>Sign-in method</span><span className="text-zinc-200">{providerLabel}</span></div>
+                    <div className="flex justify-between"><span>Member since</span><span className="text-zinc-200">{memberSince}</span></div>
+                    <div className="flex justify-between"><span>Last sign-in</span><span className="text-zinc-200">{lastSignIn}</span></div>
+                  </div>
                 </Card>
 
                 <Card className="p-6 bg-zinc-950/80 border-white/10 md:col-span-2 space-y-4">
-                  <h3 className="text-sm font-semibold text-white border-b border-white/10 pb-2">Organization Security Stats</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
-                      <span className="text-xs text-zinc-400 block">Total Scans Executed</span>
-                      <p className="text-2xl font-bold text-white mt-1">14 Scans</p>
-                    </div>
-                    <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
-                      <span className="text-xs text-zinc-400 block">Verified Patches</span>
-                      <p className="text-2xl font-bold text-emerald-400 mt-1">42 CVEs</p>
-                    </div>
-                    <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
-                      <span className="text-xs text-zinc-400 block">Avg Risk Reduction</span>
-                      <p className="text-2xl font-bold text-blue-400 mt-1">57%</p>
-                    </div>
-                    <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
-                      <span className="text-xs text-zinc-400 block">Current Plan</span>
-                      <p className="text-2xl font-bold text-purple-400 mt-1">Pro Enterprise</p>
-                    </div>
-                  </div>
+                  <h3 className="text-sm font-semibold text-white border-b border-white/10 pb-2">Assessment Activity (this browser)</h3>
+                  {(() => {
+                    const totalScans = scanHistory.length;
+                    const verifiedTotal = scanHistory.reduce((s, r) => s + r.verifiedCount, 0);
+                    const cvesTotal = scanHistory.reduce((s, r) => s + r.cveCount, 0);
+                    const avgReduction = totalScans ? Math.round(scanHistory.reduce((s, r) => s + r.reduction, 0) / totalScans) : 0;
+                    return (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+                          <span className="text-xs text-zinc-400 block">Total Scans Executed</span>
+                          <p className="text-2xl font-bold text-white mt-1">{totalScans}</p>
+                        </div>
+                        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+                          <span className="text-xs text-zinc-400 block">Verified Patches</span>
+                          <p className="text-2xl font-bold text-emerald-400 mt-1">{verifiedTotal} CVEs</p>
+                        </div>
+                        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+                          <span className="text-xs text-zinc-400 block">Avg Risk Reduction</span>
+                          <p className="text-2xl font-bold text-blue-400 mt-1">{avgReduction}%</p>
+                        </div>
+                        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+                          <span className="text-xs text-zinc-400 block">Total CVEs Mapped</span>
+                          <p className="text-2xl font-bold text-purple-400 mt-1">{cvesTotal}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </Card>
               </div>
             </div>
@@ -830,28 +1028,56 @@ export function WorkspaceView() {
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <Key className="h-5 w-5 text-amber-400" /> Threat Feeds & API Credentials
                 </h2>
-                <p className="text-xs text-zinc-400 mt-1">Configure connections to NIST NVD API v2, Neo4j Graph DB, and AI Engines</p>
+                <p className="text-xs text-zinc-400 mt-1">Live status of connected backend services and threat-intelligence sources</p>
               </div>
 
               <div className="space-y-4">
                 {[
-                  { name: 'NIST NVD API v2 Key', status: 'Connected', desc: 'Queries real-time CVSS scores, CWEs, and public exploit references', key: 'nvd_api_key_****7f9a' },
-                  { name: 'Neo4j Graph Database', status: 'Active (bolt://localhost:7687)', desc: 'Stores infrastructure node relationships and computes reachability attack paths', key: 'neo4j_auth_****881b' },
-                  { name: 'Ephemeral Docker Engine', status: 'Active Local Daemon', desc: 'Deploys isolated container sandboxes for Red Team exploit verification', key: '/var/run/docker.sock' },
-                  { name: 'AI Red/Blue Orchestrator', status: 'Operational', desc: 'Drives multi-agent reasoning for attack discovery and patch recommendation', key: 'ai_sdk_****440c' },
+                  {
+                    name: 'SentinelAI Backend API',
+                    tone: backendUp === null ? 'medium' : backendUp ? 'success' : 'critical',
+                    status: backendUp === null ? 'Checking…' : backendUp ? `Online${backendHealth?.environment ? ` • ${backendHealth.environment}` : ''}` : 'Unreachable',
+                    desc: 'FastAPI service handling ingestion, analysis, sandbox and remediation',
+                    key: BASE_URL,
+                  },
+                  {
+                    name: 'Firebase Authentication',
+                    tone: firebaseProject ? 'success' : 'medium',
+                    status: firebaseProject ? 'Initialized' : 'Not initialized',
+                    desc: 'Handles analyst sign-in and identity for the platform',
+                    key: firebaseProject ? `project: ${firebaseProject}` : '—',
+                  },
+                  {
+                    name: 'Cloud Firestore',
+                    tone: dbStatus === 'connected' ? 'success' : dbStatus === 'checking' ? 'medium' : 'info',
+                    status: dbStatus === 'connected' ? 'Connected' : dbStatus === 'checking' ? 'Checking…' : 'Local cache',
+                    desc: 'Stores your scan history and preferences, scoped to your account',
+                    key: uid ? `users/${uid}/scans` : 'Sign in to sync across devices',
+                  },
+                  {
+                    name: 'NIST NVD API v2',
+                    tone: 'info',
+                    status: 'Server-side',
+                    desc: 'CVE / CVSS enrichment performed by the backend during analysis',
+                    key: 'Configured on server (not exposed to client)',
+                  },
+                  {
+                    name: 'Neo4j Graph & Docker Sandbox',
+                    tone: 'info',
+                    status: 'Server-side',
+                    desc: 'Knowledge graph and ephemeral exploit sandbox run on the backend host',
+                    key: 'Status not exposed via API',
+                  },
                 ].map((item, idx) => (
                   <Card key={idx} className="p-5 bg-zinc-950/80 border-white/10 flex items-center justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <h3 className="text-sm font-semibold text-white">{item.name}</h3>
-                        <Badge tone="success">{item.status}</Badge>
+                        <Badge tone={item.tone as any}>{item.status}</Badge>
                       </div>
                       <p className="text-xs text-zinc-400">{item.desc}</p>
-                      <p className="text-[11px] font-mono text-zinc-500 pt-1">Target: {item.key}</p>
+                      <p className="text-[11px] font-mono text-zinc-500 pt-1 break-all">{item.key}</p>
                     </div>
-                    <button className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/10">
-                      Configure
-                    </button>
                   </Card>
                 ))}
               </div>
@@ -872,15 +1098,23 @@ export function WorkspaceView() {
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-white block">Default Remediation Code Format</label>
                   <div className="grid grid-cols-3 gap-3">
-                    <button className="rounded-xl border border-blue-500 bg-blue-600/20 p-3 text-xs font-semibold text-white text-center">
-                      Bash Script (.sh)
-                    </button>
-                    <button className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-zinc-400 text-center hover:bg-white/10">
-                      Ansible Playbook (.yml)
-                    </button>
-                    <button className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-zinc-400 text-center hover:bg-white/10">
-                      Git Unified Patch (.patch)
-                    </button>
+                    {([
+                      { id: 'bash', label: 'Bash Script (.sh)' },
+                      { id: 'ansible', label: 'Ansible Playbook (.yml)' },
+                      { id: 'git_diff', label: 'Git Unified Patch (.patch)' },
+                    ] as const).map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => dispatch(setFormat(opt.id))}
+                        className={`rounded-xl border p-3 text-xs text-center transition-all ${
+                          format === opt.id
+                            ? 'border-blue-500 bg-blue-600/20 font-semibold text-white'
+                            : 'border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -889,7 +1123,12 @@ export function WorkspaceView() {
                     <span className="text-sm font-semibold text-white block">Auto-Run Ephemeral Docker Sandbox</span>
                     <span className="text-xs text-zinc-400">Automatically detonate exploit payloads after Blue Team mitigation selection</span>
                   </div>
-                  <input type="checkbox" defaultChecked className="accent-blue-500 h-4 w-4" />
+                  <input
+                    type="checkbox"
+                    checked={appSettings.autoRunSandbox}
+                    onChange={(e) => updateSetting({ autoRunSandbox: e.target.checked })}
+                    className="accent-blue-500 h-4 w-4"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between border-t border-white/10 pt-4">
@@ -897,10 +1136,67 @@ export function WorkspaceView() {
                     <span className="text-sm font-semibold text-white block">CISO Executive Report Theme</span>
                     <span className="text-xs text-zinc-400">Styled executive summary layout for PDF export</span>
                   </div>
-                  <select className="rounded-lg border border-white/10 bg-black/60 px-3 py-1.5 text-xs text-white">
-                    <option>Dark Modern CISO Theme</option>
-                    <option>Light Enterprise Theme</option>
+                  <select
+                    value={appSettings.reportTheme}
+                    onChange={(e) => updateSetting({ reportTheme: e.target.value as AppSettings['reportTheme'] })}
+                    className="rounded-lg border border-white/10 bg-black/60 px-3 py-1.5 text-xs text-white"
+                  >
+                    <option value="dark">Dark Modern CISO Theme</option>
+                    <option value="light">Light Enterprise Theme</option>
                   </select>
+                </div>
+
+                {/* GitHub Personal Access Token (used to open remediation PRs) */}
+                <div className="space-y-2 border-t border-white/10 pt-4">
+                  <div className="flex items-center gap-2">
+                    <GitBranch className="h-4 w-4 text-blue-400" />
+                    <span className="text-sm font-semibold text-white">GitHub Access Token</span>
+                    {githubToken && <Badge tone="success" className="text-[9px]">Saved</Badge>}
+                  </div>
+                  <p className="text-xs text-zinc-400">
+                    Used to open remediation pull requests on your repositories. Needs a token with <span className="font-mono text-zinc-300">repo</span> write scope.
+                    Stored only in this browser — never uploaded to the cloud database.
+                  </p>
+
+                  {githubToken ? (
+                    <div className="flex items-center gap-2">
+                      <span className="flex-1 rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-xs font-mono text-zinc-400">
+                        {'•'.repeat(16)}{githubToken.slice(-4)}
+                      </span>
+                      <button
+                        onClick={handleClearToken}
+                        className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-medium text-rose-300 hover:bg-rose-500/20 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="password"
+                        value={tokenDraft}
+                        onChange={(e) => setTokenDraft(e.target.value)}
+                        autoComplete="off"
+                        spellCheck={false}
+                        className="flex-1 rounded-lg border border-white/10 bg-black/60 px-3 py-2 text-xs font-mono text-white outline-none focus:border-blue-500"
+                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                      />
+                      <button
+                        onClick={handleSaveToken}
+                        disabled={!tokenDraft.trim()}
+                        className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 transition-colors disabled:opacity-50"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  )}
+                  <p className="text-[11px] text-zinc-500">
+                    If left empty, the server’s configured token is used (if any).
+                    Create one at{' '}
+                    <a href="https://github.com/settings/tokens" target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 underline">
+                      github.com/settings/tokens
+                    </a>.
+                  </p>
                 </div>
               </Card>
             </div>

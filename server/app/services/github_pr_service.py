@@ -11,8 +11,12 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from ..core.config import settings
-from .github_scan_service import GithubScanError, _github_headers, _parse_repo_url
+from .github_scan_service import (
+    GithubScanError,
+    _github_headers,
+    _parse_repo_url,
+    active_github_token,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +47,8 @@ def _api(method: str, url: str, payload: dict | None = None) -> dict:
 
 
 def require_token() -> None:
-    if not settings.GITHUB_TOKEN:
-        raise GithubPRError("GITHUB_TOKEN is not configured; a token with repo write access is required to open a PR.")
+    if not active_github_token():
+        raise GithubPRError("No GitHub token available; provide one in Platform Settings or configure GITHUB_TOKEN on the server (needs repo write access).")
 
 
 def get_authenticated_user() -> str | None:

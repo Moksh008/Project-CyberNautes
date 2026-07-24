@@ -39,8 +39,10 @@ class OpenPRRequest(BaseModel):
     format: str  # "bash" | "ansible" | "git_diff"
     title: Optional[str] = None
     body: Optional[str] = None
+    github_token: Optional[str] = None  # per-request PAT; overrides server GITHUB_TOKEN
 
 
 class ManifestPRRequest(BaseModel):
     repo_url: str
     twin_id: str
+    github_token: Optional[str] = None  # per-request PAT; overrides server GITHUB_TOKEN

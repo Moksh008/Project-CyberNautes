@@ -14,6 +14,7 @@ from ..models.remediation import (
 from ..services.sandbox_service import verify_cve
 from ..services.remediation_service import generate_remediation
 from ..services.github_pr_service import GithubPRError, open_remediation_pr
+from ..services.github_scan_service import set_token_override, reset_token_override
 from ..services.manifest_patch_service import open_manifest_fix_pr
 
 logger = logging.getLogger(__name__)
@@ -53,17 +54,23 @@ async def generate(request: CodeGenRequest):
 
 @router.post("/pr")
 async def open_pr(request: OpenPRRequest):
+    handle = set_token_override(request.github_token)
     try:
         return open_remediation_pr(
             request.repo_url, request.code, request.format, request.title, request.body
         )
     except GithubPRError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        reset_token_override(handle)
 
 
 @router.post("/manifest-pr")
 async def manifest_pr(request: ManifestPRRequest):
+    handle = set_token_override(request.github_token)
     try:
         return open_manifest_fix_pr(request.repo_url, request.twin_id)
     except GithubPRError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        reset_token_override(handle)
