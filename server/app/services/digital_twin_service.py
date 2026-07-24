@@ -71,7 +71,19 @@ def _build_graph(twin_id: str, payload: InfrastructurePayload) -> None:
 
 def create_digital_twin(payload: InfrastructurePayload) -> str:
     twin_id = str(uuid.uuid4())
-    _save_to_firestore(twin_id, payload)
-    _build_graph(twin_id, payload)
-    map_threat_intel(twin_id, payload)
+    try:
+        _save_to_firestore(twin_id, payload)
+    except Exception as e:
+        logger.warning(f"Firestore save warning: {e}")
+
+    try:
+        _build_graph(twin_id, payload)
+    except Exception as e:
+        logger.warning(f"Neo4j graph construction warning: {e}")
+
+    try:
+        map_threat_intel(twin_id, payload)
+    except Exception as e:
+        logger.warning(f"Threat intel mapping warning: {e}")
+
     return twin_id

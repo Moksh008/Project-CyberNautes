@@ -1,5 +1,6 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
+import { BASE_URL } from "../api/client";
 
 let authInstance: Auth | null = null;
 
@@ -8,8 +9,7 @@ export async function initFirebase(): Promise<Auth> {
 
   try {
     // Fetch Firebase Web config from backend API
-    const backendUrl = "http://localhost:8000";
-    const response = await fetch(`${backendUrl}/api/auth/config`);
+    const response = await fetch(`${BASE_URL}/api/auth/config`);
     if (!response.ok) {
       throw new Error(`Failed to fetch Firebase configuration: ${response.status}`);
     }

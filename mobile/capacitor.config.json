@@ -1,0 +1,15 @@
+{
+  "appId": "ai.sentinel.twin",
+  "appName": "SentinelAI",
+  "webDir": "../client/dist",
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": ["project-cybernautes-production.up.railway.app"]
+  },
+  "android": {
+    "backgroundColor": "#05070a"
+  },
+  "ios": {
+    "backgroundColor": "#05070a"
+  }
+}

@@ -6,6 +6,8 @@ import './index.css';
 const LandingPage = lazy(() => import('./components/landingpage/LandingPage'));
 const SentinelDashboard = lazy(() => import('./components/dashboard/SentinelDashboard'));
 const AuthUI = lazy(() => import('./components/landingpage/AuthUI').then(m => ({ default: m.AuthUI })));
+const PricingPage = lazy(() => import('./components/pricing/PricingPage'));
+const DocsPage = lazy(() => import('./components/docs/DocsPage'));
 
 // Minimal loading spinner placeholder for Suspense fallback
 function PageLoader() {
@@ -25,6 +27,8 @@ function App() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/docs" element={<DocsPage />} />
           <Route path="/login" element={<AuthUI />} />
           <Route path="/dashboard" element={<SentinelDashboard />} />
         </Routes>

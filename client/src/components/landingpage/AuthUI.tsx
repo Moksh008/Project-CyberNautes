@@ -5,11 +5,11 @@ import { useState, useId, useEffect } from "react";
 import { Slot } from "@radix-ui/react-slot";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck, Box, Sparkles, RefreshCw } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate, Link } from "react-router-dom";
 import { initFirebase } from "../../config/firebase";
 import { 
   signInWithEmailAndPassword, 
@@ -19,6 +19,27 @@ import {
   signInWithPopup, 
   type Auth 
 } from "firebase/auth";
+import "@google/model-viewer";
+
+interface ModelViewerProps extends React.HTMLAttributes<HTMLElement> {
+  src?: string;
+  alt?: string;
+  "auto-rotate"?: boolean | string;
+  "camera-controls"?: boolean | string;
+  "shadow-intensity"?: string;
+  "shadow-softness"?: string;
+  "environment-image"?: string;
+  exposure?: string;
+  "auto-rotate-delay"?: string | number;
+  "rotation-per-second"?: string;
+  "touch-action"?: string;
+  poster?: string;
+  loading?: "auto" | "lazy" | "eager";
+}
+
+function ModelViewer(props: ModelViewerProps) {
+  return React.createElement("model-viewer", props);
+}
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -36,7 +57,7 @@ export interface TypewriterProps {
 
 export function Typewriter({
   text,
-  speed = 100,
+  speed = 80,
   cursor = "|",
   loop = false,
   deleteSpeed = 50,
@@ -92,13 +113,13 @@ export function Typewriter({
   return (
     <span className={className}>
       {displayText}
-      <span className="animate-pulse">{cursor}</span>
+      <span className="animate-pulse text-blue-400">{cursor}</span>
     </span>
   );
 }
 
 const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-300"
 );
 
 const Label = React.forwardRef<
@@ -115,21 +136,21 @@ const Label = React.forwardRef<
 Label.displayName = LabelPrimitive.Root.displayName;
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/40",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input dark:border-input/50 bg-background hover:bg-accent hover:text-accent-foreground",
+        outline: "border border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary-foreground/60 underline-offset-4 hover:underline",
+        link: "text-blue-400 underline-offset-4 hover:underline p-0 h-auto",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-12 rounded-md px-6",
+        default: "h-11 px-4 py-2",
+        sm: "h-9 rounded-lg px-3",
+        lg: "h-12 rounded-xl px-6",
         icon: "h-8 w-8",
       },
     },
@@ -139,6 +160,7 @@ const buttonVariants = cva(
     },
   }
 );
+
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
@@ -156,7 +178,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
       <input
         type={type}
         className={cn(
-          "flex h-10 w-full rounded-lg border border-input dark:border-input/50 bg-background px-3 py-3 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:bg-accent focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-11 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-4 py-2 text-sm text-white shadow-sm transition-all placeholder:text-zinc-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
           className
         )}
         ref={ref}
@@ -176,11 +198,11 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
     const [showPassword, setShowPassword] = useState(false);
     const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
     return (
-      <div className="grid w-full items-center gap-2">
+      <div className="grid w-full items-center gap-1.5">
         {label && <Label htmlFor={id}>{label}</Label>}
         <div className="relative">
           <Input id={id} type={showPassword ? "text" : "password"} className={cn("pe-10", className)} ref={ref} {...props} />
-          <button type="button" onClick={togglePasswordVisibility} className="absolute inset-y-0 end-0 flex h-full w-10 items-center justify-center text-muted-foreground/80 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50" aria-label={showPassword ? "Hide password" : "Show password"}>
+          <button type="button" onClick={togglePasswordVisibility} className="absolute inset-y-0 end-0 flex h-full w-10 items-center justify-center text-zinc-400 transition-colors hover:text-white focus:outline-none" aria-label={showPassword ? "Hide password" : "Show password"}>
             {showPassword ? (<EyeOff className="size-4" aria-hidden="true" />) : (<Eye className="size-4" aria-hidden="true" />)}
           </button>
         </div>
@@ -217,24 +239,24 @@ function SignInForm({ auth, onSuccess }: FormProps) {
   };
 
   return (
-    <form onSubmit={handleSignIn} autoComplete="on" className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Sign in to your account</h1>
-        <p className="text-balance text-sm text-muted-foreground">Enter your email below to sign in</p>
+    <form onSubmit={handleSignIn} autoComplete="on" className="flex flex-col gap-5">
+      <div className="flex flex-col items-center gap-1.5 text-center">
+        <h1 className="text-2xl font-bold text-white tracking-tight">Sign in to SentinelAI</h1>
+        <p className="text-xs text-zinc-400">Enter your security credentials to access the console</p>
       </div>
       {error && (
-        <div className="p-3 text-xs bg-destructive/10 border border-destructive/20 text-destructive rounded-lg">
+        <div className="p-3 text-xs bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl">
           {error.replace("Firebase:", "").trim()}
         </div>
       )}
       <div className="grid gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
+        <div className="grid gap-1.5">
+          <Label htmlFor="email">Work Email</Label>
           <Input 
             id="email" 
             name="email" 
             type="email" 
-            placeholder="m@example.com" 
+            placeholder="name@company.com" 
             required 
             autoComplete="email" 
             value={email}
@@ -246,12 +268,12 @@ function SignInForm({ auth, onSuccess }: FormProps) {
           label="Password" 
           required 
           autoComplete="current-password" 
-          placeholder="Password" 
+          placeholder="••••••••" 
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Button type="submit" variant="outline" className="mt-2" disabled={loading}>
-          {loading ? "Signing In..." : "Sign In"}
+        <Button type="submit" variant="default" className="mt-2" disabled={loading}>
+          {loading ? "Authenticating..." : "Sign In to Gateway"}
         </Button>
       </div>
     </form>
@@ -284,37 +306,37 @@ function SignUpForm({ auth, onSuccess }: FormProps) {
   };
 
   return (
-    <form onSubmit={handleSignUp} autoComplete="on" className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Create an account</h1>
-        <p className="text-balance text-sm text-muted-foreground">Enter your details below to sign up</p>
+    <form onSubmit={handleSignUp} autoComplete="on" className="flex flex-col gap-5">
+      <div className="flex flex-col items-center gap-1.5 text-center">
+        <h1 className="text-2xl font-bold text-white tracking-tight">Create SentinelAI Account</h1>
+        <p className="text-xs text-zinc-400">Initialize your cyber defense twin workspace</p>
       </div>
       {error && (
-        <div className="p-3 text-xs bg-destructive/10 border border-destructive/20 text-destructive rounded-lg">
+        <div className="p-3 text-xs bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl">
           {error.replace("Firebase:", "").trim()}
         </div>
       )}
       <div className="grid gap-4">
-        <div className="grid gap-1">
+        <div className="grid gap-1.5">
           <Label htmlFor="name">Full Name</Label>
           <Input 
             id="name" 
             name="name" 
             type="text" 
-            placeholder="John Doe" 
+            placeholder="Security Analyst" 
             required 
             autoComplete="name" 
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </div>
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
+        <div className="grid gap-1.5">
+          <Label htmlFor="email">Work Email</Label>
           <Input 
             id="email" 
             name="email" 
             type="email" 
-            placeholder="m@example.com" 
+            placeholder="name@company.com" 
             required 
             autoComplete="email" 
             value={email}
@@ -326,12 +348,12 @@ function SignUpForm({ auth, onSuccess }: FormProps) {
           label="Password" 
           required 
           autoComplete="new-password" 
-          placeholder="Password" 
+          placeholder="••••••••" 
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Button type="submit" variant="outline" className="mt-2" disabled={loading}>
-          {loading ? "Signing Up..." : "Sign Up"}
+        <Button type="submit" variant="default" className="mt-2" disabled={loading}>
+          {loading ? "Creating Workspace..." : "Create Account"}
         </Button>
       </div>
     </form>
@@ -368,33 +390,47 @@ function AuthFormContainer({
   };
 
   return (
-    <div className="mx-auto grid w-[350px] gap-2">
+    <div className="mx-auto grid w-full max-w-sm gap-4">
+      {/* Brand Header */}
+      <div className="flex items-center justify-center gap-2 mb-2">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <ShieldCheck size={18} className="text-white" />
+          </div>
+          <span className="text-base font-bold text-white tracking-tight">SentinelAI</span>
+        </Link>
+      </div>
+
       {isSignIn ? (
         <SignInForm auth={auth} onSuccess={onSuccess} />
       ) : (
         <SignUpForm auth={auth} onSuccess={onSuccess} />
       )}
-      <div className="text-center text-sm">
-        {isSignIn ? "Don't have an account?" : "Already have an account?"}{" "}
-        <Button variant="link" className="pl-1 text-foreground" onClick={onToggle}>
+
+      <div className="text-center text-xs text-zinc-400">
+        {isSignIn ? "Don't have a workspace?" : "Already registered?"}{" "}
+        <Button variant="link" className="text-blue-400 font-semibold" onClick={onToggle}>
           {isSignIn ? "Sign up" : "Sign in"}
         </Button>
       </div>
+
       {googleError && (
-        <div className="p-3 text-xs bg-destructive/10 border border-destructive/20 text-destructive rounded-lg">
+        <div className="p-3 text-xs bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl">
           {googleError.replace("Firebase:", "").trim()}
         </div>
       )}
-      <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-        <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
+
+      <div className="relative text-center text-xs my-2 after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-white/10">
+        <span className="relative z-10 bg-black px-2 text-zinc-500 uppercase tracking-wider font-mono">Or continue with</span>
       </div>
+
       <Button variant="outline" type="button" onClick={handleGoogleSignIn} disabled={googleLoading}>
         {googleLoading ? (
           "Connecting..."
         ) : (
           <>
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google icon" className="mr-2 h-4 w-4" />
-            Continue with Google
+            Continue with Google SSO
           </>
         )}
       </Button>
@@ -402,52 +438,46 @@ function AuthFormContainer({
   );
 }
 
-interface AuthContentProps {
-    image?: {
-        src: string;
-        alt: string;
-    };
-    quote?: {
-        text: string;
-        author: string;
-    }
-}
+const allModelPresets = [
+  {
+    name: "Cyber Defense Helmet",
+    src: "/models/helmet.glb",
+    quote: "SentinelAI Cyber Defense Twin active. Interactive 3D threat surface analysis ready.",
+    author: "SentinelAI Defense Engine",
+  },
+  {
+    name: "Autonomous AI Agent",
+    src: "/models/robot.glb",
+    quote: "Deploying Autonomous Multi-Agent Threat Neutralization Engine.",
+    author: "SentinelAI Infrastructure Core",
+  },
+  {
+    name: "3D Astronaut Explorer",
+    src: "/models/astronaut.glb",
+    quote: "Exploring unmapped digital asset universes with zero-day reachability.",
+    author: "SentinelAI Red-Team Range",
+  },
+];
 
-interface AuthUIProps {
-    signInContent?: AuthContentProps;
-    signUpContent?: AuthContentProps;
-}
-
-const defaultSignInContent = {
-    image: {
-        src: "https://i.ibb.co/XrkdGrrv/original-ccdd6d6195fff2386a31b684b7abdd2e-removebg-preview.png",
-        alt: "A beautiful interior design for sign-in"
-    },
-    quote: {
-        text: "Welcome Back! The journey continues.",
-        author: "EaseMize UI"
-    }
-};
-
-const defaultSignUpContent = {
-    image: {
-        src: "https://i.ibb.co/HTZ6DPsS/original-33b8479c324a5448d6145b3cad7c51e7-removebg-preview.png",
-        alt: "A vibrant, modern space for new beginnings"
-    },
-    quote: {
-        text: "Create an account. A new chapter awaits.",
-        author: "EaseMize UI"
-    }
-};
-
-export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) {
+export function AuthUI() {
   const [isSignIn, setIsSignIn] = useState(true);
-  const toggleForm = () => setIsSignIn((prev) => !prev);
+  const [modelIndex, setModelIndex] = useState(0);
+
+  const toggleForm = () => {
+    setIsSignIn((prev) => {
+      const nextState = !prev;
+      // Set appropriate 3D model preset based on view
+      setModelIndex(nextState ? 0 : 1);
+      return nextState;
+    });
+  };
 
   const [auth, setAuth] = useState<Auth | null>(null);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [configError, setConfigError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const currentModel = allModelPresets[modelIndex % allModelPresets.length];
 
   useEffect(() => {
     let active = true;
@@ -474,57 +504,29 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
     navigate("/dashboard");
   };
 
-  const finalSignInContent = {
-      image: { ...defaultSignInContent.image, ...signInContent.image },
-      quote: { ...defaultSignInContent.quote, ...signInContent.quote },
-  };
-  const finalSignUpContent = {
-      image: { ...defaultSignUpContent.image, ...signUpContent.image },
-      quote: { ...defaultSignUpContent.quote, ...signUpContent.quote },
-  };
-
-  const currentContent = isSignIn ? finalSignInContent : finalSignUpContent;
-
-  const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
-  const imageRef = React.useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imageRef.current) return;
-
-    const rect = imageRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-
-    setMousePosition({ x: x * 10, y: y * 10 });
-  };
-
-  const handleMouseLeave = () => {
-    setMousePosition({ x: 0, y: 0 });
-  };
-
   return (
-    <div className="w-full min-h-screen md:grid md:grid-cols-2 bg-black">
+    <div className="w-full min-h-screen md:grid md:grid-cols-12 bg-black overflow-hidden">
       <style>{`
         input[type="password"]::-ms-reveal,
         input[type="password"]::-ms-clear {
           display: none;
         }
       `}</style>
-      <div className="flex h-screen items-center justify-center p-6 md:h-auto md:p-0 md:py-12 bg-black">
+
+      {/* Left Column: Form Controls */}
+      <div className="md:col-span-6 lg:col-span-5 flex h-screen items-center justify-center p-6 bg-black relative z-20">
         {loadingConfig ? (
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-            <p className="text-muted-foreground text-sm">Securing handshake with Sentinel gateway...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <p className="text-zinc-400 text-xs font-mono">Connecting to SentinelAI Auth Gateway...</p>
           </div>
         ) : configError ? (
           <div className="flex flex-col items-center gap-4 text-center max-w-sm px-4">
-            <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-full">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+            <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-full">
+              <ShieldCheck size={24} />
             </div>
-            <h2 className="text-xl font-semibold">Gateway Connection Error</h2>
-            <p className="text-muted-foreground text-sm">{configError}</p>
+            <h2 className="text-xl font-semibold text-white">Gateway Connection Timeout</h2>
+            <p className="text-zinc-400 text-xs">{configError}</p>
             <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Retry Connection</Button>
           </div>
         ) : auth ? (
@@ -537,70 +539,77 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
         ) : null}
       </div>
 
-      <motion.div
-        ref={imageRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        initial={{ opacity: 0, rotateY: 45 }}
-        animate={{ opacity: 1, rotateY: 0 }}
-        exit={{ opacity: 0, rotateY: -45 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="hidden md:flex relative overflow-hidden rounded-xl md:rounded-none items-center justify-center perspective"
-        style={{
-          perspective: "1200px",
-          backgroundImage: `url(${currentContent.image.src})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-        key={currentContent.image.src}
-      >
-        <motion.div
-          animate={{
-            rotateX: mousePosition.y * 0.8,
-            rotateY: mousePosition.x * 0.8,
-            z: 50,
-          }}
-          transition={{ type: "spring", stiffness: 400, damping: 60 }}
-          className="w-full h-full"
-          style={{
-            transformStyle: "preserve-3d",
-            transformOrigin: "center",
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/20" />
-          <div className="absolute inset-x-0 bottom-0 h-[100px] bg-gradient-to-t from-background to-transparent" />
+      {/* Right Column: 3D GLB Model Viewer Canvas */}
+      <div className="hidden md:block md:col-span-6 lg:col-span-7 relative bg-gradient-to-br from-zinc-950 via-black to-blue-950/40 border-l border-white/10 overflow-hidden">
+        {/* Background Grid & Lighting */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/15 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/15 blur-[120px] rounded-full pointer-events-none" />
 
-          <motion.div
-            initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-            className="relative z-10 flex h-full flex-col items-center justify-end p-2 pb-6"
+        {/* 3D GLB Top Controls Overlay */}
+        <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-30 pointer-events-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-black/60 backdrop-blur-md text-xs font-mono text-zinc-300">
+            <Box size={14} className="text-blue-400 animate-pulse" /> 3D GLB Canvas ({currentModel.name})
+          </div>
+          <button
+            onClick={() => setModelIndex((prev) => prev + 1)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-black/60 hover:bg-white/10 backdrop-blur-md text-xs font-medium text-zinc-300 cursor-pointer transition-colors"
           >
-            <blockquote className="space-y-2 text-center text-foreground">
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-                className="text-lg font-medium"
-              >
-                "<Typewriter
-                    key={currentContent.quote.text}
-                    text={currentContent.quote.text}
-                    speed={60}
-                  />"
-              </motion.p>
-              <motion.cite
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-                className="block text-sm font-light text-muted-foreground not-italic"
-              >
-                — {currentContent.quote.author}
-              </motion.cite>
-            </blockquote>
-          </motion.div>
-        </motion.div>
-      </motion.div>
+            <RefreshCw size={12} className="text-blue-400" /> Switch 3D Model
+          </button>
+        </div>
+
+        {/* 3D Model Viewer Component */}
+        <div className="w-full h-full flex items-center justify-center p-8 relative z-20">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentModel.src}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.5 }}
+              className="w-full h-[75vh] relative"
+            >
+              <ModelViewer
+                src={currentModel.src}
+                alt={currentModel.name}
+                auto-rotate
+                camera-controls
+                shadow-intensity="1.5"
+                shadow-softness="0.8"
+                environment-image="neutral"
+                exposure="1.2"
+                auto-rotate-delay="0"
+                rotation-per-second="25deg"
+                touch-action="pan-y"
+                loading="eager"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: "transparent",
+                  outline: "none",
+                }}
+              />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Floating Quote & Instructions Overlay */}
+        <div className="absolute bottom-8 inset-x-8 z-30 pointer-events-none text-center">
+          <div className="inline-block p-4 rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl max-w-lg shadow-2xl">
+            <p className="text-sm font-medium text-zinc-200 leading-relaxed mb-1">
+              "<Typewriter key={currentModel.quote} text={currentModel.quote} speed={40} />"
+            </p>
+            <div className="flex items-center justify-center gap-2 text-xs font-mono text-zinc-400">
+              <Sparkles size={12} className="text-blue-400" /> {currentModel.author}
+              <span className="text-zinc-600">|</span>
+              <span className="text-zinc-500">Drag to rotate 360°</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+
+export default AuthUI;

@@ -31,7 +31,7 @@ const Navbar1 = () => {
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2.5">
+          <Link to="/" className="flex items-center gap-2.5">
             <motion.div
               className="w-8 h-8 flex items-center justify-center"
               whileHover={{ rotate: 10 }}
@@ -42,23 +42,28 @@ const Navbar1 = () => {
               </div>
             </motion.div>
             <span className="text-sm font-semibold text-white tracking-tight">SentinelAI</span>
-          </a>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
-            {["Features", "Pricing", "Docs", "About"].map((item, i) => (
+            {[
+              { label: "Features", href: "/" },
+              { label: "Pricing", href: "/pricing" },
+              { label: "Docs", href: "/docs" },
+              { label: "About", href: "/" },
+            ].map((item, i) => (
               <motion.div
-                key={item}
+                key={item.label}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: i * 0.05 }}
               >
-                <a
-                  href="#"
+                <Link
+                  to={item.href}
                   className="text-[13px] text-white/50 hover:text-white transition-colors font-medium px-3.5 py-2 rounded-full hover:bg-white/[0.06]"
                 >
-                  {item}
-                </a>
+                  {item.label}
+                </Link>
               </motion.div>
             ))}
           </nav>
@@ -110,21 +115,26 @@ const Navbar1 = () => {
               <X className="h-6 w-6 text-white/70" />
             </motion.button>
             <div className="flex flex-col space-y-2">
-              {["Features", "Pricing", "Docs", "About"].map((item, i) => (
+              {[
+                { label: "Features", href: "/" },
+                { label: "Pricing", href: "/pricing" },
+                { label: "Docs", href: "/docs" },
+                { label: "About", href: "/" },
+              ].map((item, i) => (
                 <motion.div
-                  key={item}
+                  key={item.label}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 + 0.1 }}
                   exit={{ opacity: 0, x: 20 }}
                 >
-                  <a
-                    href="#"
+                  <Link
+                    to={item.href}
                     className="block text-2xl text-white/60 hover:text-white font-medium py-3 transition-colors"
                     onClick={toggleMenu}
                   >
-                    {item}
-                  </a>
+                    {item.label}
+                  </Link>
                 </motion.div>
               ))}
 
