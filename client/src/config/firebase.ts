@@ -1,8 +1,10 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
 import { BASE_URL } from "../api/client";
 
 let authInstance: Auth | null = null;
+let firestoreInstance: Firestore | null = null;
 
 export async function initFirebase(): Promise<Auth> {
   if (authInstance) return authInstance;
@@ -29,6 +31,7 @@ export async function initFirebase(): Promise<Auth> {
     }
     
     authInstance = getAuth(app);
+    firestoreInstance = getFirestore(app);
     return authInstance;
   } catch (error) {
     console.error("Firebase dynamic initialization failed:", error);
@@ -38,4 +41,11 @@ export async function initFirebase(): Promise<Auth> {
 
 export function getAuthInstance(): Auth | null {
   return authInstance;
+}
+
+export async function initFirestore(): Promise<Firestore> {
+  if (firestoreInstance) return firestoreInstance;
+  await initFirebase();
+  if (!firestoreInstance) throw new Error("Firestore failed to initialize");
+  return firestoreInstance;
 }

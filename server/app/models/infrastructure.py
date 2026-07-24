@@ -6,7 +6,7 @@ from typing import Optional
 
 class Software(BaseModel):
     name: str
-    version: Optional[str] = None
+    version: Optional[str] = None   
 
 
 class Asset(BaseModel):
