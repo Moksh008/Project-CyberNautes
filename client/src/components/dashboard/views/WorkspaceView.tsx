@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initFirebase, getAuthInstance } from '../../../config/firebase';
 import { BASE_URL } from '../../../api/client';
 import { onAuthStateChanged, signOut, type User as FirebaseUser } from 'firebase/auth';
@@ -47,6 +47,12 @@ interface ChatMessage {
   text: string;
   time: string;
   actionCard?: boolean;
+  isTyping?: boolean;
+}
+
+interface ApiChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
 }
 
 export function WorkspaceView() {
@@ -132,6 +138,11 @@ export function WorkspaceView() {
   
   // Platform execution mode
   const [, setPlatformMode] = useState<'simulated' | 'real' | 'educational' | 'custom'>('simulated');
+
+  // Chat state
+  const [isChatTyping, setIsChatTyping] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatHistoryRef = useRef<ApiChatMessage[]>([]);
   
   // Sandbox verification states
   const [sandboxRunning, setSandboxRunning] = useState(false);
@@ -207,6 +218,11 @@ export function WorkspaceView() {
       actionCard: true,
     },
   ]);
+
+  // Auto-scroll to bottom whenever a new message arrives or typing indicator appears
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, isChatTyping]);
 
   const isIngesting = status === 'ingesting' || status === 'analyzing';
   const typedAssets = assets as AssetShape[];
@@ -565,13 +581,14 @@ export function WorkspaceView() {
     }
   };
 
-  const handleSendChatMessage = (e?: React.FormEvent) => {
+  const handleSendChatMessage = useCallback(async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!chatInputText.trim()) return;
+    if (!chatInputText.trim() || isChatTyping) return;
 
     const userText = chatInputText.trim();
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
+    // Optimistically add user message
     setChatMessages((prev) => [
       ...prev,
       {
@@ -581,32 +598,77 @@ export function WorkspaceView() {
         time: `Today at ${timeStr}`,
       },
     ]);
-
     setChatInputText('');
+    setIsChatTyping(true);
 
+    // Keyword-based tab switching (still works alongside AI)
     const lower = userText.toLowerCase();
-    setTimeout(() => {
-      if (lower.includes('attack') || lower.includes('path') || lower.includes('exploit') || lower.includes('cve') || lower.includes('chain')) {
-        setActiveStepTab('paths');
-        addAssistantMessage("Switched right workbench view to Red Team Attack Paths & CVE Threat Intelligence.");
-      } else if (lower.includes('mitigat') || lower.includes('rec') || lower.includes('blue') || lower.includes('fix')) {
-        setActiveStepTab('recs');
-        addAssistantMessage("Switched right workbench view to AI Blue Team Recommended Mitigations.");
-      } else if (lower.includes('sandbox') || lower.includes('detonat') || lower.includes('docker') || lower.includes('verify')) {
-        setActiveStepTab('sandbox');
-        addAssistantMessage("Switched right workbench view to Ephemeral Docker Sandbox Execution.");
-      } else if (lower.includes('code') || lower.includes('patch') || lower.includes('bash') || lower.includes('ansible') || lower.includes('pr')) {
-        setActiveStepTab('code');
-        addAssistantMessage("Switched right workbench view to Remediation Code & Git Pull Request generator.");
-      } else if (lower.includes('report') || lower.includes('ciso') || lower.includes('pdf') || lower.includes('executive')) {
-        setActiveStepTab('report');
-        addAssistantMessage("Switched right workbench view to Executive Security Assessment Report.");
-      } else {
-        setActiveStepTab('overview');
-        addAssistantMessage(`Executed instruction: "${userText}". Digital Twin graph updated.`);
-      }
-    }, 500);
-  };
+    if (lower.includes('attack path') || lower.includes('show attack') || lower.includes('exploit chain')) {
+      setActiveStepTab('paths');
+    } else if (lower.includes('recommendation') || lower.includes('blue team') || lower.includes('show fix')) {
+      setActiveStepTab('recs');
+    } else if (lower.includes('sandbox') || lower.includes('docker') || lower.includes('detonate')) {
+      setActiveStepTab('sandbox');
+    } else if (lower.includes('show code') || lower.includes('show patch') || lower.includes('bash script')) {
+      setActiveStepTab('code');
+    } else if (lower.includes('show report') || lower.includes('executive report') || lower.includes('show ciso')) {
+      setActiveStepTab('report');
+    }
+
+    // Build history for the API (last 10 exchanges to keep tokens small)
+    const history = chatHistoryRef.current.slice(-20);
+
+    try {
+      const response = await fetch(`${BASE_URL}/api/chat/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userText,
+          history,
+          twin_name: twinName || undefined,
+          risk_score: riskScore > 0 ? riskScore : undefined,
+          asset_count: typedAssets.length > 0 ? typedAssets.length : undefined,
+          cve_count: uniqueCveIds.size > 0 ? uniqueCveIds.size : undefined,
+        }),
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      const reply: string = data.reply || 'I was unable to generate a response.';
+
+      // Update history ref
+      chatHistoryRef.current = [
+        ...history,
+        { role: 'user', content: userText },
+        { role: 'assistant', content: reply },
+      ];
+
+      const replyTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          sender: 'assistant',
+          text: reply,
+          time: `Today at ${replyTimeStr}`,
+        },
+      ]);
+    } catch (err) {
+      console.error('Chat API error:', err);
+      const errorTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          sender: 'assistant',
+          text: 'Sorry, I could not reach the SentinelAI backend. Please ensure the server is running and try again.',
+          time: `Today at ${errorTimeStr}`,
+        },
+      ]);
+    } finally {
+      setIsChatTyping(false);
+    }
+  }, [chatInputText, isChatTyping, twinName, riskScore, typedAssets.length, uniqueCveIds.size]);
 
   // Stage 1 Sidebar active tab state
   const [stage1Tab, setStage1Tab] = useState<'new_assessment' | 'history' | 'profile' | 'api_keys' | 'settings'>('new_assessment');
@@ -1284,7 +1346,7 @@ export function WorkspaceView() {
             {chatMessages.map((msg) => (
               <div key={msg.id} className="space-y-3">
                 {msg.sender === 'user' ? (
-                  /* User Prompt Bubble (Image reference style) */
+                  /* User Prompt Bubble */
                   <div className="flex justify-end">
                     <div className="max-w-[85%] rounded-2xl bg-zinc-800/80 border border-white/10 px-4 py-3 text-xs text-zinc-100 leading-relaxed shadow-sm">
                       <p>{msg.text}</p>
@@ -1300,7 +1362,7 @@ export function WorkspaceView() {
                         </div>
                         <span className="text-[11px] font-medium text-zinc-400">SentinelAI</span>
                       </div>
-                      <div className="rounded-2xl bg-zinc-900/90 border border-white/10 p-3.5 text-xs text-zinc-300 leading-relaxed">
+                      <div className="rounded-2xl bg-zinc-900/90 border border-white/10 p-3.5 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
                         <p>{msg.text}</p>
                       </div>
                     </div>
@@ -1308,6 +1370,28 @@ export function WorkspaceView() {
                 )}
               </div>
             ))}
+
+            {/* Typing Indicator */}
+            {isChatTyping && (
+              <div className="flex justify-start">
+                <div className="max-w-[90%] space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-5 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white animate-pulse">
+                      S
+                    </div>
+                    <span className="text-[11px] font-medium text-zinc-400">SentinelAI is thinking...</span>
+                  </div>
+                  <div className="rounded-2xl bg-zinc-900/90 border border-white/10 p-3.5 flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Scroll anchor */}
+            <div ref={chatEndRef} />
 
             {/* Interactive Step-by-Step Question Card (DYNAMIC GUIDED WORKFLOW) */}
             {isCardVisible && (
@@ -1410,8 +1494,9 @@ export function WorkspaceView() {
                 type="text"
                 value={chatInputText}
                 onChange={(e) => setChatInputText(e.target.value)}
-                placeholder="Tell Sentinel what to do instead..."
-                className="w-full bg-transparent px-3 py-1.5 text-xs text-white outline-none placeholder:text-zinc-500"
+                placeholder={isChatTyping ? 'SentinelAI is thinking...' : 'Ask anything about the project or platform...'}
+                disabled={isChatTyping}
+                className="w-full bg-transparent px-3 py-1.5 text-xs text-white outline-none placeholder:text-zinc-500 disabled:opacity-60"
               />
 
               <div className="flex items-center justify-between pt-1 border-t border-white/5 px-1">
@@ -1454,7 +1539,7 @@ export function WorkspaceView() {
                   </button>
                   <button
                     type="submit"
-                    disabled={!chatInputText.trim()}
+                    disabled={!chatInputText.trim() || isChatTyping}
                     className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 hover:bg-blue-600 text-white transition-all disabled:opacity-40"
                   >
                     <ArrowUp className="h-4 w-4" />
@@ -1514,15 +1599,15 @@ export function WorkspaceView() {
                 </div>
               </div>
               <div className="border-l border-white/15 pl-3 flex items-center gap-3">
-                <RiskGauge score={riskScore} size={60} />
+                <RiskGauge score={riskScore} size={72} />
                 <div className="flex flex-col justify-center leading-tight">
                   <span
-                    className="text-xs font-black uppercase tracking-wider"
+                    className="text-sm font-black uppercase tracking-wider"
                     style={{ color: riskScore > 70 ? '#f43f5e' : riskScore > 40 ? '#fb923c' : '#34d399' }}
                   >
                     {riskScore > 70 ? 'Critical Threat' : riskScore > 40 ? 'High Threat' : 'Low Risk'}
                   </span>
-                  <span className="text-[10px] font-medium text-zinc-400 mt-0.5">Calculated Posture</span>
+                  <span className="text-xs font-medium text-zinc-400 mt-0.5">Calculated Posture</span>
                 </div>
               </div>
             </div>
@@ -1895,7 +1980,7 @@ export function WorkspaceView() {
 
             {/* FEATURE 6: EXECUTIVE REPORT */}
             {activeStepTab === 'report' && (
-              <div className="space-y-5">
+              <div id="printable-report" className="space-y-5">
                 <div className="flex justify-between items-center border-b border-white/10 pb-3">
                   <h3 className="text-base font-semibold text-white flex items-center gap-2">
                     <FileText className="h-5 w-5 text-blue-400" /> Executive Security Assessment
@@ -2024,7 +2109,7 @@ export function WorkspaceView() {
           </div>
 
           {/* Floating Action Toolbar on Bottom Right (MATCHING REFERENCE IMAGE FLOATING BAR) */}
-          <div className="absolute bottom-5 right-5 z-20 flex items-center gap-1.5 rounded-full border border-white/15 bg-zinc-900/90 px-3 py-1.5 shadow-2xl backdrop-blur-xl">
+          <div className="absolute bottom-5 right-5 z-20 flex items-center gap-1.5 rounded-full border border-white/15 bg-zinc-900/90 px-3 py-1.5 shadow-2xl backdrop-blur-xl no-print">
             <button title="Focus Canvas" className="rounded-full p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white transition-colors">
               <Focus className="h-3.5 w-3.5" />
             </button>
@@ -2042,7 +2127,7 @@ export function WorkspaceView() {
       </div>
 
       {/* Stitch AI Fixed Native Bottom Tab Bar for Mobile App */}
-      <nav className="flex lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#05070a]/90 backdrop-blur-xl px-2 h-16 shadow-2xl justify-around items-center">
+      <nav className="flex lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#05070a]/90 backdrop-blur-xl px-2 h-16 shadow-2xl justify-around items-center no-print">
         {[
           { id: 'chat', label: 'AI CHAT', icon: MessageSquare },
           { id: 'overview', label: 'NODES', icon: Server },

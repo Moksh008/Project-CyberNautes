@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api import auth, ingest, analyze, labs, remediation, sast
+from .api import auth, ingest, analyze, labs, remediation, sast, chat
 from .core.config import settings
 from .core.neo4j_db import neo4j_driver
 import logging
@@ -30,6 +30,7 @@ app.include_router(analyze.router, prefix="/api/analyze", tags=["Analysis"])
 app.include_router(labs.router, prefix="/api/labs", tags=["Labs"])
 app.include_router(remediation.router, prefix="/api/remediation", tags=["Remediation"])
 app.include_router(sast.router, prefix="/api/sast", tags=["SAST Analysis"])
+app.include_router(chat.router, prefix="/api/chat", tags=["AI Chat"])
 
 @app.on_event("shutdown")
 async def shutdown_event():
