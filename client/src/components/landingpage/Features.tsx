@@ -40,13 +40,13 @@ export const Features = () => {
   ];
 
   return (
-    <section className="py-32 md:py-44 border-t border-zinc-900 px-8 md:px-28 bg-black font-sans">
+    <section className="py-32 md:py-44 border-t border-slate-900 px-8 md:px-28 bg-[#05070a] font-sans">
       <div className="max-w-6xl mx-auto">
-        <motion.span {...fadeUp(0)} className="text-xs tracking-[3px] uppercase text-zinc-500 block mb-6">THE SOLUTION</motion.span>
+        <motion.span {...fadeUp(0)} className="text-xs tracking-[3px] uppercase text-slate-500 block mb-6">THE SOLUTION</motion.span>
         <motion.h2 {...fadeUp(0.1)} className="text-4xl md:text-6xl font-medium mb-6 leading-tight text-white tracking-[-1px]">
           The platform for <span className="font-serif italic font-normal">proactive</span> resilience
         </motion.h2>
-        <motion.p {...fadeUp(0.15)} className="text-zinc-400 text-lg mb-16 max-w-2xl leading-relaxed">
+        <motion.p {...fadeUp(0.15)} className="text-slate-400 text-lg mb-16 max-w-2xl leading-relaxed">
           Four pillars working in concert to transform your security posture from reactive scanning to mathematically proven defense.
         </motion.p>
 
@@ -57,13 +57,13 @@ export const Features = () => {
               <motion.div
                 key={i}
                 {...fadeUp(0.2 + i * 0.08)}
-                className={`${feature.span} group gradient-border bento-glow rounded-2xl p-7 flex flex-col justify-between cursor-default transition-all duration-500 hover:shadow-2xl overflow-hidden relative`}
+                className={`${feature.span} group glass-panel glass-panel-interactive bento-glow rounded-2xl p-7 flex flex-col justify-between cursor-default transition-all duration-500 hover:shadow-2xl overflow-hidden relative`}
               >
                 {/* Subtle gradient background */}
                 <div className={`absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-bl ${feature.bgColor} rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
 
                 <div className="relative z-10">
-                  <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center mb-5 transition-transform duration-500 group-hover:scale-110">
+                  <div className="w-10 h-10 rounded-xl glass-pill flex items-center justify-center mb-5 transition-transform duration-500 group-hover:scale-110">
                     <Icon size={20} strokeWidth={1.5} className={`${feature.color}`} />
                   </div>
                   <h3 className="font-semibold text-lg mb-2 text-white">{feature.title}</h3>

@@ -12,7 +12,7 @@ import { Footer } from './Footer';
 
 export const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
+    <div className="min-h-screen bg-[#05070a] text-white selection:bg-white selection:text-black">
       <LandingStyles />
       {/* Grain texture overlay */}
       <div className="grain-overlay" />

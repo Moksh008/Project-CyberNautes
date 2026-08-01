@@ -10,8 +10,8 @@
     padding: 0;
     width: 100%;
     min-height: 100vh;
-    background-color: black;
-    color: white;
+    background-color: #05070a;
+    color: #f8fafc;
     overflow-x: hidden;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
@@ -67,6 +67,102 @@
 .animate-shimmer {
   animation: shimmer 3s ease-in-out infinite;
   background-size: 200% 100%;
+}
+
+/* Glassmorphism theme utilities — "Watch Demo button" look: always-visible dark charcoal fill +
+   a crisp white outline at rest (no invisible/disappearing divs). On hover/focus the fill deepens
+   to a richer black and the outline brightens — never a hazy gray wash — plus a subtle forward
+   scale/lift so content reads as coming toward the viewer. */
+.glass-panel {
+  background: rgba(6, 8, 12, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.glass-panel:hover,
+.glass-panel:focus-within,
+.glass-panel-interactive:hover,
+.glass-panel-interactive:focus-within {
+  background: rgba(2, 3, 5, 0.8);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 24px rgba(255, 255, 255, 0.06);
+  transform: scale(1.015);
+}
+
+.glass-panel-interactive:hover,
+.glass-panel-interactive:focus-within {
+  transform: scale(1.02) translateY(-3px);
+}
+
+.glass-pill {
+  background: rgba(6, 8, 12, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.25s ease;
+}
+
+.glass-pill:hover,
+.glass-pill:focus-within {
+  background: rgba(2, 3, 5, 0.75);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.03);
+}
+
+/* Floating glass navbar/sidebar chrome — always-visible dark + outline, static at rest.
+   Intentionally has NO hover-brighten/pop of its own — it's persistent chrome, not a card;
+   only the buttons/pills placed inside it (glass-pill, nav item highlights) should react to hover. */
+.glass-navbar {
+  background: rgba(6, 8, 12, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Animated monochrome "wave" background layer — drop `<div className="aurora-wave" />`
+   inside a `relative overflow-hidden` wrapper to add slow drifting motion behind glass panels */
+@keyframes wave-drift {
+  0%, 100% { transform: translate3d(-6%, -2%, 0) scale(1); }
+  50% { transform: translate3d(6%, 3%, 0) scale(1.18); }
+}
+
+@keyframes wave-drift-reverse {
+  0%, 100% { transform: translate3d(5%, 4%, 0) scale(1.1); }
+  50% { transform: translate3d(-5%, -3%, 0) scale(1); }
+}
+
+.aurora-wave {
+  position: absolute;
+  inset: -25%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(42% 32% at 22% 28%, rgba(255, 255, 255, 0.1), transparent 70%),
+    radial-gradient(38% 30% at 78% 22%, rgba(255, 255, 255, 0.07), transparent 70%),
+    radial-gradient(48% 38% at 50% 82%, rgba(255, 255, 255, 0.06), transparent 70%);
+  filter: blur(70px);
+  animation: wave-drift 22s ease-in-out infinite;
+  will-change: transform;
+}
+
+.aurora-wave::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(35% 45% at 65% 60%, rgba(255, 255, 255, 0.05), transparent 70%);
+  animation: wave-drift-reverse 26s ease-in-out infinite;
+}
+
+.aurora-wave-fast {
+  animation-duration: 4s;
+}
+
+.aurora-wave-fast::after {
+  animation-duration: 5s;
 }
 
 /* Executive report PDF export (window.print) */

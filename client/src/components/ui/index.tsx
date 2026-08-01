@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { ExternalLink, ShieldCheck, Target } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
-export const CARD = 'rounded-xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl';
+export const CARD = 'rounded-xl glass-panel p-6';
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return <div className={cn(CARD, className)}>{children}</div>;
@@ -235,7 +235,7 @@ export function CveIntelCard({ cve, verified }: { cve: CveIntel; verified?: bool
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-blue-300 hover:bg-white/10"
+              className="inline-flex items-center gap-1 rounded glass-pill px-2 py-0.5 text-[10px] text-blue-300"
             >
               <ExternalLink className="h-3 w-3" /> {hostOf(url)}
             </a>
@@ -291,7 +291,7 @@ export function HopChain({ nodes, edgeLabel = 'RCE' }: { nodes: string[]; edgeLa
     <div className="flex flex-wrap items-center gap-y-2">
       {nodes.map((node, i) => (
         <div key={i} className="flex items-center">
-          <span className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-1.5 font-mono text-xs text-zinc-200 shadow-sm">
+          <span className="rounded-lg glass-pill px-3 py-1.5 font-mono text-xs text-zinc-200 shadow-sm">
             {node}
           </span>
           {i < nodes.length - 1 && (
