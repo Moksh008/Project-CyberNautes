@@ -216,18 +216,18 @@ export function CyberTwin3DCanvas({ isSignIn }: { isSignIn?: boolean }) {
     <div className="w-full h-full flex flex-col justify-between relative overflow-hidden">
       {/* Top Cyber Mode Preset Switcher */}
       <div className="flex items-center justify-between p-6 z-20 pointer-events-auto">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 backdrop-blur-md text-xs font-mono text-blue-300">
-          <Activity size={14} className="text-blue-400 animate-pulse" /> 
+        <div className="glass-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono text-white/70">
+          <Activity size={14} className="text-white/70 animate-pulse" />
           <span>SentinelAI 3D Cyber Twin</span>
         </div>
 
         {/* Mode Tabs */}
-        <div className="flex items-center gap-1 bg-black/60 border border-white/10 p-1 rounded-xl backdrop-blur-md">
+        <div className="glass-pill flex items-center gap-1 p-1 rounded-xl">
           <button
             onClick={() => setActivePreset("graph")}
             className={cn(
               "px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer",
-              activePreset === "graph" ? "bg-blue-600 text-white shadow-md" : "text-zinc-400 hover:text-white"
+              activePreset === "graph" ? "bg-white text-black shadow-md" : "text-zinc-400 hover:text-white"
             )}
           >
             Attack Graph
@@ -236,7 +236,7 @@ export function CyberTwin3DCanvas({ isSignIn }: { isSignIn?: boolean }) {
             onClick={() => setActivePreset("agents")}
             className={cn(
               "px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer",
-              activePreset === "agents" ? "bg-purple-600 text-white shadow-md" : "text-zinc-400 hover:text-white"
+              activePreset === "agents" ? "bg-white text-black shadow-md" : "text-zinc-400 hover:text-white"
             )}
           >
             AI Agents
@@ -245,7 +245,7 @@ export function CyberTwin3DCanvas({ isSignIn }: { isSignIn?: boolean }) {
             onClick={() => setActivePreset("sandbox")}
             className={cn(
               "px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer",
-              activePreset === "sandbox" ? "bg-emerald-600 text-white shadow-md" : "text-zinc-400 hover:text-white"
+              activePreset === "sandbox" ? "bg-white text-black shadow-md" : "text-zinc-400 hover:text-white"
             )}
           >
             Docker Sandbox

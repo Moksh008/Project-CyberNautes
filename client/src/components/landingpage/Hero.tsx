@@ -6,10 +6,10 @@ import { Shield, ChevronDown } from 'lucide-react';
 
 export const Hero = () => {
   return (
-    <section className="relative min-h-screen w-full overflow-hidden flex items-center justify-center px-8 md:px-28 font-sans bg-black text-white">
+    <section className="relative min-h-screen w-full overflow-hidden flex items-center justify-center px-8 md:px-28 font-sans bg-[#05070a] text-white">
       {/* Background video */}
       <div className="absolute inset-0 z-0">
-        <video autoPlay muted loop playsInline className="w-full h-full object-cover grayscale brightness-[0.25]">
+        <video autoPlay muted loop playsInline className="w-full h-full object-cover grayscale brightness-[0.18]">
           <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260325_120549_0cd82c36-56b3-4dd9-b190-069cfc3a623f.mp4" type="video/mp4" />
         </video>
         <div className="absolute bottom-0 left-0 right-0 h-80 bg-gradient-to-t from-black to-transparent" />
@@ -27,9 +27,9 @@ export const Hero = () => {
         {/* Left side – text */}
         <div className="flex-1 pt-12 md:pt-16">
           <motion.div {...fadeUp(0)} className="flex items-center gap-3 mb-8">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.03]">
+            <div className="glass-pill flex items-center gap-2 px-3 py-1.5 rounded-full">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-zinc-400 text-xs font-medium">1,200+ attacks simulated today</span>
+              <span className="text-slate-400 text-xs font-medium">1,200+ attacks simulated today</span>
             </div>
           </motion.div>
 
@@ -39,7 +39,7 @@ export const Hero = () => {
             <br />Secure.
           </motion.h1>
 
-          <motion.p {...fadeUp(0.3)} className="text-lg md:text-xl text-zinc-400 max-w-lg mb-12 font-light leading-relaxed">
+          <motion.p {...fadeUp(0.3)} className="text-lg md:text-xl text-slate-400 max-w-lg mb-12 font-light leading-relaxed">
             The AI‑Powered Cyber Defense Twin lets you safely simulate realistic cyber attacks against a digital replica of your infrastructure and automatically generate verifiable patches.
           </motion.p>
 
@@ -47,7 +47,7 @@ export const Hero = () => {
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
               <Link
                 to="/dashboard"
-                className="flex items-center justify-center bg-white text-black font-semibold rounded-full px-8 py-3.5 text-sm tracking-wide w-full sm:w-auto hover:shadow-lg hover:shadow-white/10 transition-shadow"
+                className="flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-full px-8 py-3.5 text-sm tracking-wide w-full sm:w-auto hover:shadow-lg hover:shadow-blue-500/25 transition-shadow"
               >
                 Get Started
               </Link>
@@ -55,7 +55,7 @@ export const Hero = () => {
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
-              className="ml-liquid-glass text-white/80 font-medium rounded-full px-8 py-3.5 text-sm tracking-wide w-full sm:w-auto hover:text-white transition-colors border border-white/10"
+              className="glass-pill text-white/85 font-medium rounded-full px-8 py-3.5 text-sm tracking-wide w-full sm:w-auto hover:text-white transition-colors"
             >
               Watch Demo
             </motion.button>
@@ -87,14 +87,14 @@ export const Hero = () => {
             </div>
 
             {/* Central shield */}
-            <div className="relative z-10 w-28 h-28 rounded-2xl bg-gradient-to-br from-white/10 to-white/[0.02] border border-white/10 flex items-center justify-center backdrop-blur-sm animate-float">
+            <div className="glass-panel relative z-10 w-28 h-28 rounded-2xl flex items-center justify-center animate-float">
               <Shield size={42} className="text-white/70" strokeWidth={1} />
               <div className="absolute inset-0 rounded-2xl bg-blue-500/[0.08] blur-xl" />
             </div>
 
             {/* Status cards floating around */}
             <motion.div
-              className="absolute -top-2 -right-4 px-3 py-2 rounded-lg bg-zinc-900/80 border border-white/10 backdrop-blur-sm"
+              className="glass-pill absolute -top-2 -right-4 px-3 py-2 rounded-lg"
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             >
@@ -105,7 +105,7 @@ export const Hero = () => {
             </motion.div>
 
             <motion.div
-              className="absolute -bottom-4 -left-8 px-3 py-2 rounded-lg bg-zinc-900/80 border border-white/10 backdrop-blur-sm"
+              className="glass-pill absolute -bottom-4 -left-8 px-3 py-2 rounded-lg"
               animate={{ y: [0, 6, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
             >
@@ -116,7 +116,7 @@ export const Hero = () => {
             </motion.div>
 
             <motion.div
-              className="absolute top-1/2 -left-16 px-3 py-2 rounded-lg bg-zinc-900/80 border border-white/10 backdrop-blur-sm"
+              className="glass-pill absolute top-1/2 -left-16 px-3 py-2 rounded-lg"
               animate={{ y: [0, -4, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
             >

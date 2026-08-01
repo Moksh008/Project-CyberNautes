@@ -9,8 +9,8 @@ const logos = [
 
 export const LogoCloud = () => {
   return (
-    <section className="py-16 border-t border-zinc-900 bg-black font-sans overflow-hidden">
-      <motion.p {...fadeUp(0)} className="text-center text-xs tracking-[3px] uppercase text-zinc-600 mb-10">
+    <section className="py-16 border-t border-slate-900 bg-[#05070a] font-sans overflow-hidden">
+      <motion.p {...fadeUp(0)} className="text-center text-xs tracking-[3px] uppercase text-slate-500 mb-10">
         Trusted by security teams at
       </motion.p>
 
@@ -23,7 +23,7 @@ export const LogoCloud = () => {
         <div className="flex animate-marquee whitespace-nowrap">
           {[...logos, ...logos].map((name, i) => (
             <div key={i} className="flex items-center mx-10">
-              <span className="text-zinc-600 text-lg font-semibold tracking-tight select-none">
+              <span className="text-slate-500 text-lg font-semibold tracking-tight select-none">
                 {name}
               </span>
             </div>

@@ -10,9 +10,9 @@ const footerLinks = {
 
 export const Footer = () => {
   return (
-    <footer className="pt-20 pb-12 px-8 md:px-28 border-t border-zinc-900 bg-black font-sans">
+    <footer className="relative pt-20 pb-12 px-8 md:px-28 border-t border-slate-900 bg-[#05070a] font-sans">
       {/* Gradient divider */}
-      <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
+      <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
 
       <div className="max-w-6xl mx-auto">
         {/* Top section */}
@@ -20,7 +20,7 @@ export const Footer = () => {
           {/* Brand */}
           <div className="col-span-2">
             <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-white/15 to-white/5 border border-white/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg glass-pill flex items-center justify-center">
                 <Shield size={16} className="text-white/80" strokeWidth={1.5} />
               </div>
               <span className="text-sm font-semibold text-white tracking-tight">SentinelAI</span>
@@ -34,7 +34,7 @@ export const Footer = () => {
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="flex-1 bg-zinc-900/80 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
+                className="flex-1 glass-pill rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none transition-colors"
               />
               <button className="bg-white text-black text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-white/90 transition-colors whitespace-nowrap">
                 Subscribe
@@ -45,11 +45,11 @@ export const Footer = () => {
           {/* Link columns */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h4 className="text-xs tracking-[2px] uppercase text-zinc-500 mb-5 font-medium">{category}</h4>
+              <h4 className="text-xs tracking-[2px] uppercase text-slate-500 mb-5 font-medium">{category}</h4>
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link}>
-                    <a href="#" className="text-zinc-400 hover:text-white transition-colors text-sm">
+                    <a href="#" className="text-slate-400 hover:text-white transition-colors text-sm">
                       {link}
                     </a>
                   </li>

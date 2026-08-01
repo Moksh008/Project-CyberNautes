@@ -122,18 +122,18 @@ const PricingSwitch = ({ onSwitch }: { onSwitch: (value: string) => void }) => {
 
   return (
     <div className="flex justify-center">
-      <div className="relative z-10 mx-auto flex w-fit rounded-full bg-neutral-900 border border-gray-700 p-1">
+      <div className="glass-pill relative z-10 mx-auto flex w-fit rounded-full p-1">
         <button
           onClick={() => handleSwitch("0")}
           className={cn(
             "relative z-10 w-fit h-10 rounded-full sm:px-6 px-3 sm:py-2 py-1 font-medium transition-colors cursor-pointer text-sm",
-            selected === "0" ? "text-white" : "text-gray-400",
+            selected === "0" ? "text-black" : "text-slate-400",
           )}
         >
           {selected === "0" && (
             <motion.span
               layoutId={"switch"}
-              className="absolute top-0 left-0 h-10 w-full rounded-full border-4 shadow-sm shadow-blue-600 border-blue-600 bg-gradient-to-t from-blue-500 to-blue-600"
+              className="absolute top-0 left-0 h-10 w-full rounded-full border-4 shadow-sm shadow-white/40 border-white bg-gradient-to-t from-white/90 to-white"
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
@@ -144,18 +144,18 @@ const PricingSwitch = ({ onSwitch }: { onSwitch: (value: string) => void }) => {
           onClick={() => handleSwitch("1")}
           className={cn(
             "relative z-10 w-fit h-10 flex-shrink-0 rounded-full sm:px-6 px-3 sm:py-2 py-1 font-medium transition-colors cursor-pointer text-sm",
-            selected === "1" ? "text-white" : "text-gray-400",
+            selected === "1" ? "text-black" : "text-slate-400",
           )}
         >
           {selected === "1" && (
             <motion.span
               layoutId={"switch"}
-              className="absolute top-0 left-0 h-10 w-full rounded-full border-4 shadow-sm shadow-blue-600 border-blue-600 bg-gradient-to-t from-blue-500 to-blue-600"
+              className="absolute top-0 left-0 h-10 w-full rounded-full border-4 shadow-sm shadow-white/40 border-white bg-gradient-to-t from-white/90 to-white"
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
           <span className="relative flex items-center gap-2">
-            Annual Billing <span className="text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded-full">Save 20%</span>
+            Annual Billing <span className="text-[10px] font-bold uppercase text-white glass-pill px-1.5 py-0.5 rounded-full">Save 20%</span>
           </span>
         </button>
       </div>
@@ -189,16 +189,19 @@ export function PricingPage() {
     setIsYearly(Number.parseInt(value) === 1);
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
+    <div className="relative min-h-screen bg-[#05070a] text-white selection:bg-white selection:text-black">
       <LandingStyles />
       <div className="grain-overlay" />
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="aurora-wave" />
+      </div>
 
       {/* Navigation Bar */}
       <Navbar1 />
 
       <div
         id="pricing-content"
-        className="min-h-screen mx-auto relative bg-black overflow-x-hidden pt-12 pb-24"
+        className="min-h-screen mx-auto relative overflow-x-hidden pt-12 pb-24"
         ref={pricingRef}
       >
         <TimelineContent
@@ -227,7 +230,7 @@ export function PricingPage() {
             <div
               className="absolute left-[-568px] right-[-568px] top-0 h-[2053px] flex-none rounded-full pointer-events-none"
               style={{
-                border: "200px solid #3131f5",
+                border: "200px solid #888888",
                 filter: "blur(92px)",
                 WebkitFilter: "blur(92px)",
               }}
@@ -239,8 +242,8 @@ export function PricingPage() {
 
         {/* Hero Header */}
         <article className="text-center mb-8 pt-28 max-w-4xl mx-auto space-y-4 relative z-50 px-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-xs font-mono uppercase tracking-wider mb-2">
-            <Sparkles size={14} className="text-blue-400" /> Transparent Pricing for Everyone
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-white/80 text-xs font-mono uppercase tracking-wider mb-2">
+            <Sparkles size={14} className="text-white/70" /> Transparent Pricing for Everyone
           </div>
 
           <h1 className="text-4xl md:text-6xl font-medium tracking-tight text-white">
@@ -266,7 +269,7 @@ export function PricingPage() {
             animationNum={0}
             timelineRef={pricingRef}
             customVariants={revealVariants}
-            className="text-gray-300 text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed"
+            className="text-slate-300 text-base md:text-lg max-w-2xl mx-auto font-light leading-relaxed"
           >
             From free access for students & researchers to robust enterprise AI protection for Indian tech teams and BFSI organizations.
           </TimelineContent>
@@ -286,7 +289,7 @@ export function PricingPage() {
         <div
           className="absolute top-0 left-[10%] right-[10%] w-[80%] h-full z-0 pointer-events-none"
           style={{
-            backgroundImage: `radial-gradient(circle at center, #206ce8 0%, transparent 70%)`,
+            backgroundImage: `radial-gradient(circle at center, #808080 0%, transparent 70%)`,
             opacity: 0.4,
             mixBlendMode: "multiply",
           }}
@@ -303,12 +306,12 @@ export function PricingPage() {
               customVariants={revealVariants}
             >
               <Card
-                className={`relative h-full flex flex-col justify-between text-white border-neutral-800 transition-all duration-300 hover:border-neutral-700 ${
+                className={`glass-panel glass-panel-interactive relative h-full flex flex-col justify-between text-white transition-all duration-300 ${
                   plan.popular
-                    ? "bg-gradient-to-b from-blue-950/40 via-neutral-900 to-neutral-900 border-blue-500/50 shadow-[0px_0px_35px_0px_rgba(49,49,245,0.3)] z-20"
+                    ? "!bg-gradient-to-b !from-white/[0.08] !via-white/[0.03] !to-white/[0.02] !border-white/40 shadow-[0px_0px_35px_0px_rgba(255,255,255,0.15)] z-20"
                     : plan.isFree
-                      ? "bg-gradient-to-b from-emerald-950/20 via-neutral-900 to-neutral-950 border-emerald-500/30 z-10"
-                      : "bg-gradient-to-b from-neutral-900/90 to-neutral-950 z-10"
+                      ? "border-white/20 z-10"
+                      : "z-10"
                 }`}
               >
                 <div>
@@ -316,11 +319,11 @@ export function PricingPage() {
                     <div className="flex justify-between items-center mb-1">
                       <h3 className="text-xl md:text-2xl font-semibold tracking-tight">{plan.name}</h3>
                       {plan.popular ? (
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded-full shadow-sm">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-white text-black px-2 py-0.5 rounded-full shadow-sm">
                           Most Popular
                         </span>
                       ) : plan.isFree ? (
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-white glass-pill px-2 py-0.5 rounded-full">
                           {plan.badge}
                         </span>
                       ) : null}
@@ -328,7 +331,7 @@ export function PricingPage() {
 
                     <div className="flex items-baseline my-3">
                       {plan.isFree ? (
-                        <span className="text-3xl md:text-4xl font-bold text-emerald-400 tracking-tight">
+                        <span className="text-3xl md:text-4xl font-bold text-white tracking-tight">
                           Free
                         </span>
                       ) : plan.customPrice ? (
@@ -348,14 +351,14 @@ export function PricingPage() {
                               className="text-3xl md:text-4xl font-bold inline-block ml-0.5"
                             />
                           </span>
-                          <span className="text-gray-400 text-xs ml-1.5 font-normal">
+                          <span className="text-slate-400 text-xs ml-1.5 font-normal">
                             /month
                           </span>
                         </>
                       )}
                     </div>
 
-                    <p className="text-xs text-gray-400 min-h-[40px] leading-relaxed">{plan.description}</p>
+                    <p className="text-xs text-slate-400 min-h-[40px] leading-relaxed">{plan.description}</p>
                   </CardHeader>
 
                   <CardContent className="pt-0">
@@ -363,17 +366,17 @@ export function PricingPage() {
                       to="/login"
                       className={`block text-center w-full mb-6 py-3 px-4 text-xs md:text-sm font-semibold rounded-xl cursor-pointer transition-all ${
                         plan.popular
-                          ? "bg-gradient-to-t from-blue-600 to-blue-500 shadow-lg shadow-blue-900/50 border border-blue-400 text-white hover:brightness-110"
+                          ? "bg-white text-black shadow-lg shadow-white/10 border border-white hover:bg-white/90"
                           : plan.isFree
-                            ? "bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300"
-                            : "bg-neutral-900 hover:bg-neutral-800 shadow-md border border-neutral-700 text-white"
+                            ? "glass-pill text-white"
+                            : "glass-pill shadow-md text-white"
                       }`}
                     >
                       {plan.buttonText}
                     </Link>
 
-                    <div className="space-y-3 pt-4 border-t border-neutral-800">
-                      <h4 className="font-medium text-xs text-gray-400 uppercase tracking-wider mb-2">
+                    <div className="space-y-3 pt-4 border-t border-white/10">
+                      <h4 className="font-medium text-xs text-slate-400 uppercase tracking-wider mb-2">
                         {plan.includes[0]}
                       </h4>
                       <ul className="space-y-2.5">
@@ -382,8 +385,8 @@ export function PricingPage() {
                             key={featureIndex}
                             className="flex items-start gap-2 text-left"
                           >
-                            <span className={`h-1.5 w-1.5 mt-1.5 rounded-full shrink-0 ${plan.isFree ? "bg-emerald-400" : "bg-blue-500"}`}></span>
-                            <span className="text-xs text-gray-300 leading-snug">{feature}</span>
+                            <span className={`h-1.5 w-1.5 mt-1.5 rounded-full shrink-0 ${plan.isFree ? "bg-emerald-400" : "bg-white/60"}`}></span>
+                            <span className="text-xs text-slate-300 leading-snug">{feature}</span>
                           </li>
                         ))}
                       </ul>
@@ -399,7 +402,7 @@ export function PricingPage() {
         <section className="max-w-4xl mx-auto mt-24 px-4 relative z-20">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-semibold text-white tracking-tight mb-3">Frequently Asked Questions</h2>
-            <p className="text-zinc-400 text-sm">Everything you need to know about SentinelAI plans & compliance in India.</p>
+            <p className="text-slate-400 text-sm">Everything you need to know about SentinelAI plans & compliance in India.</p>
           </div>
 
           <div className="space-y-4">
@@ -408,19 +411,19 @@ export function PricingPage() {
               return (
                 <div
                   key={index}
-                  className="rounded-2xl border border-white/10 bg-neutral-900/50 backdrop-blur-md overflow-hidden transition-all duration-300"
+                  className="glass-panel glass-panel-interactive rounded-2xl overflow-hidden"
                 >
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : index)}
-                    className="w-full flex items-center justify-between p-6 text-left cursor-pointer hover:bg-white/[0.02]"
+                    className="w-full flex items-center justify-between p-6 text-left cursor-pointer hover:bg-white/[0.04]"
                   >
                     <span className="text-base font-medium text-white flex items-center gap-3">
-                      <HelpCircle size={18} className="text-blue-400 shrink-0" />
+                      <HelpCircle size={18} className="text-white/70 shrink-0" />
                       {faq.q}
                     </span>
                     <ChevronDown
                       size={18}
-                      className={`text-zinc-400 transition-transform duration-300 shrink-0 ${
+                      className={`text-slate-400 transition-transform duration-300 shrink-0 ${
                         isOpen ? "rotate-180 text-white" : ""
                       }`}
                     />
@@ -433,7 +436,7 @@ export function PricingPage() {
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <div className="px-6 pb-6 text-sm text-zinc-400 leading-relaxed pl-11 border-t border-white/5 pt-3">
+                        <div className="px-6 pb-6 text-sm text-slate-400 leading-relaxed pl-11 border-t border-white/5 pt-3">
                           {faq.a}
                         </div>
                       </motion.div>
@@ -447,10 +450,10 @@ export function PricingPage() {
 
         {/* CTA banner */}
         <div className="max-w-5xl mx-auto mt-24 px-4 text-center relative z-20">
-          <div className="rounded-3xl border border-blue-500/30 bg-gradient-to-r from-blue-950/40 via-neutral-900 to-purple-950/40 p-10 md:p-14 relative overflow-hidden">
+          <div className="rounded-3xl glass-panel p-10 md:p-14 relative overflow-hidden">
             <div className="relative z-10 space-y-4">
               <h3 className="text-3xl font-semibold text-white">Need a custom Security Audit or On-Premise Demo?</h3>
-              <p className="text-zinc-400 text-sm max-w-xl mx-auto">
+              <p className="text-slate-400 text-sm max-w-xl mx-auto">
                 Talk to our security architects for specialized CERT-In audit support, air-gapped deployments, or enterprise SLAs.
               </p>
               <div className="pt-2">

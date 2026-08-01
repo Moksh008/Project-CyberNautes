@@ -35,13 +35,13 @@ export const Problem = () => {
   ];
 
   return (
-    <section className="py-32 md:py-44 px-8 md:px-28 bg-black font-sans">
+    <section className="py-32 md:py-44 px-8 md:px-28 bg-[#05070a] font-sans">
       <motion.div {...fadeUp(0)} className="text-center mb-24">
-        <span className="text-xs tracking-[3px] uppercase text-zinc-500 block mb-6">THE PROBLEM</span>
+        <span className="text-xs tracking-[3px] uppercase text-slate-500 block mb-6">THE PROBLEM</span>
         <h2 className="text-4xl md:text-6xl lg:text-7xl font-medium tracking-[-1px] mb-8 text-white">
           Cybersecurity has <span className="font-serif italic font-normal">evolved.</span> Have you?
         </h2>
-        <p className="text-zinc-400 text-lg max-w-2xl mx-auto font-light leading-relaxed">
+        <p className="text-slate-400 text-lg max-w-2xl mx-auto font-light leading-relaxed">
           The way we secure infrastructure is broken. It's no longer just about listing vulnerabilities, but understanding the actual attack paths that put your organization at risk.
         </p>
       </motion.div>
@@ -53,20 +53,20 @@ export const Problem = () => {
             <motion.div
               key={i}
               {...fadeUp(0.1 + i * 0.1)}
-              className={`group gradient-border bento-glow p-8 rounded-2xl cursor-default transition-all duration-500 hover:shadow-2xl ${prob.glowColor}`}
+              className={`group glass-panel glass-panel-interactive bento-glow p-8 rounded-2xl cursor-default transition-all duration-500 hover:shadow-2xl ${prob.glowColor}`}
             >
               <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${prob.color} flex items-center justify-center mb-6 transition-transform duration-500 group-hover:scale-110`}>
                 <Icon size={22} strokeWidth={1.5} className={`${prob.iconColor} transition-colors`} />
               </div>
               <span className="text-zinc-600 text-xs font-mono tracking-wider block mb-3">{prob.num}</span>
               <h3 className="font-semibold text-lg mb-3 text-white">{prob.name}</h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">{prob.desc}</p>
+              <p className="text-slate-400 text-sm leading-relaxed">{prob.desc}</p>
             </motion.div>
           );
         })}
       </div>
 
-      <motion.p {...fadeUp(0.4)} className="text-zinc-600 text-sm text-center tracking-[2px] uppercase">
+      <motion.p {...fadeUp(0.4)} className="text-slate-500 text-sm text-center tracking-[2px] uppercase">
         If you don't find the attack paths, the adversaries will.
       </motion.p>
     </section>

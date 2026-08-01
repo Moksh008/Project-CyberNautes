@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 const Word = ({ word, range, scrollYProgress, isHighlighted }: { word: string, range: [number, number], scrollYProgress: any, isHighlighted?: boolean }) => {
   const opacity = useTransform(scrollYProgress, range, [0.15, 1]);
   return (
-    <motion.span style={{ opacity }} className={isHighlighted ? "text-white" : "text-zinc-500"}>
+    <motion.span style={{ opacity }} className={isHighlighted ? "text-white" : "text-slate-500"}>
       {word}{" "}
     </motion.span>
   );
@@ -22,11 +22,13 @@ export const Mission = () => {
   const highlightWords = ["defense", "meets", "intelligence", "mathematically", "proven", "security"];
 
   return (
-    <section ref={targetRef} className="pt-0 pb-32 md:pb-44 px-8 md:px-28 bg-black font-sans">
-      <div className="flex justify-center mb-32">
-        <video autoPlay muted loop playsInline className="w-[800px] h-auto rounded-3xl grayscale brightness-75">
+    <section ref={targetRef} className="pt-0 pb-32 md:pb-44 px-8 md:px-28 bg-[#05070a] font-sans">
+      <div className="relative w-screen left-1/2 right-1/2 -mx-[50vw] mb-32 overflow-hidden">
+        <video autoPlay muted loop playsInline className="w-full h-[60vh] md:h-[70vh] object-cover grayscale brightness-75">
           <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260325_132944_a0d124bb-eaa1-4082-aa30-2310efb42b4b.mp4" type="video/mp4" />
         </video>
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#05070a] to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#05070a] to-transparent" />
       </div>
 
       <div className="max-w-6xl mx-auto space-y-20">

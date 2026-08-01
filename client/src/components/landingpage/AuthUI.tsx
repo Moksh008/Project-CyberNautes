@@ -119,12 +119,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/40",
+        default: "bg-white text-black hover:bg-white/90 shadow-lg shadow-black/40",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20",
+        outline: "glass-pill text-white",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-blue-400 underline-offset-4 hover:underline p-0 h-auto",
+        link: "text-white/80 underline-offset-4 hover:underline hover:text-white p-0 h-auto",
       },
       size: {
         default: "h-11 px-4 py-2",
@@ -157,7 +157,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
       <input
         type={type}
         className={cn(
-          "flex h-11 w-full rounded-xl border border-white/10 bg-zinc-900/70 px-4 py-2 text-sm text-white shadow-sm transition-all placeholder:text-zinc-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
+          "flex h-11 w-full rounded-xl glass-pill px-4 py-2 text-sm text-white shadow-sm transition-all placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-white/30",
           className
         )}
         ref={ref}
@@ -373,7 +373,7 @@ function AuthFormContainer({
       {/* Brand Header */}
       <div className="flex items-center justify-center gap-2 mb-2">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <div className="w-8 h-8 rounded-lg glass-pill flex items-center justify-center shadow-lg shadow-black/30">
             <ShieldCheck size={18} className="text-white" />
           </div>
           <span className="text-base font-bold text-white tracking-tight">SentinelAI</span>
@@ -388,7 +388,7 @@ function AuthFormContainer({
 
       <div className="text-center text-xs text-zinc-400">
         {isSignIn ? "Don't have a workspace?" : "Already registered?"}{" "}
-        <Button variant="link" className="text-blue-400 font-semibold" onClick={onToggle}>
+        <Button variant="link" className="text-white font-semibold" onClick={onToggle}>
           {isSignIn ? "Sign up" : "Sign in"}
         </Button>
       </div>
@@ -452,19 +452,24 @@ export function AuthUI() {
   };
 
   return (
-    <div className="w-full min-h-screen md:grid md:grid-cols-12 bg-black overflow-hidden">
+    <div className="w-full min-h-screen md:grid md:grid-cols-12 bg-black overflow-hidden relative">
       <style>{`
         input[type="password"]::-ms-reveal,
         input[type="password"]::-ms-clear {
           display: none;
         }
       `}</style>
+      <div className="grain-overlay" />
 
       {/* Left Column: Form Controls */}
-      <div className="md:col-span-6 lg:col-span-5 flex h-screen items-center justify-center p-6 bg-black relative z-20">
+      <div className="md:col-span-6 lg:col-span-5 flex h-screen items-center justify-center p-6 bg-black relative z-20 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="aurora-wave" />
+        </div>
+        <div className="relative z-10 w-full flex items-center justify-center">
         {loadingConfig ? (
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white/70"></div>
             <p className="text-zinc-400 text-xs font-mono">Connecting to SentinelAI Auth Gateway...</p>
           </div>
         ) : configError ? (
@@ -484,10 +489,11 @@ export function AuthUI() {
             onSuccess={handleAuthSuccess} 
           />
         ) : null}
+        </div>
       </div>
 
       {/* Right Column: Project-Relevant 3D Cyber Defense Visualizer */}
-      <div className="hidden md:block md:col-span-6 lg:col-span-7 relative bg-gradient-to-br from-zinc-950 via-black to-blue-950/40 border-l border-white/10 overflow-hidden">
+      <div className="hidden md:block md:col-span-6 lg:col-span-7 relative bg-gradient-to-br from-zinc-950 via-black to-zinc-900/60 border-l border-white/10 overflow-hidden">
         <CyberTwin3DCanvas isSignIn={isSignIn} />
       </div>
     </div>

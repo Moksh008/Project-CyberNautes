@@ -1,19 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Link } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, Shield } from "lucide-react"
 
 const Navbar1 = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50)
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
 
   const toggleMenu = () => setIsOpen(!isOpen)
 
@@ -21,15 +14,12 @@ const Navbar1 = () => {
     <>
       <div className="fixed top-0 left-0 right-0 z-50 flex justify-center w-full py-4 px-4">
         <motion.div
-          className={`flex items-center justify-between px-6 py-3 rounded-full w-full max-w-3xl relative transition-all duration-500 border ${
-            scrolled
-              ? "bg-black/70 backdrop-blur-2xl border-white/10 shadow-2xl shadow-black/50"
-              : "bg-white/[0.03] backdrop-blur-md border-white/[0.06]"
-          }`}
+          className="glass-navbar flex items-center justify-between px-6 py-3 rounded-full w-full max-w-3xl relative transition-all duration-500"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
+
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5">
             <motion.div
@@ -60,7 +50,7 @@ const Navbar1 = () => {
               >
                 <Link
                   to={item.href}
-                  className="text-[13px] text-white/50 hover:text-white transition-colors font-medium px-3.5 py-2 rounded-full hover:bg-white/[0.06]"
+                  className="text-[13px] text-white/50 hover:text-white transition-colors duration-200 font-medium px-3.5 py-2 rounded-full hover:bg-white/[0.08] hover:backdrop-blur-sm"
                 >
                   {item.label}
                 </Link>
@@ -77,7 +67,7 @@ const Navbar1 = () => {
           >
             <Link
               to="/login"
-              className="inline-flex items-center justify-center px-5 py-2 text-[13px] font-medium text-black bg-white rounded-full hover:bg-white/90 transition-all"
+              className="inline-flex items-center justify-center px-5 py-2 text-[13px] font-medium text-white bg-gradient-to-b from-blue-500 to-blue-600 rounded-full border border-white/10 shadow-[0_2px_10px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_4px_16px_rgba(37,99,235,0.55),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-blue-400 hover:to-blue-500 transition-all duration-200"
             >
               Login
             </Link>
@@ -85,11 +75,11 @@ const Navbar1 = () => {
 
           {/* Mobile Menu Button */}
           <motion.button
-            className="md:hidden flex items-center p-1"
+            className="md:hidden flex items-center p-2 rounded-full bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.1] transition-colors"
             onClick={toggleMenu}
             whileTap={{ scale: 0.9 }}
           >
-            <Menu className="h-5 w-5 text-white/70" />
+            <Menu className="h-4 w-4 text-white/70" />
           </motion.button>
         </motion.div>
       </div>
@@ -98,7 +88,7 @@ const Navbar1 = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 pt-24 px-8 md:hidden"
+            className="fixed inset-0 bg-[#05070a]/90 backdrop-blur-2xl backdrop-saturate-150 z-50 pt-24 px-8 md:hidden"
             initial={{ opacity: 0, x: "100%" }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "100%" }}

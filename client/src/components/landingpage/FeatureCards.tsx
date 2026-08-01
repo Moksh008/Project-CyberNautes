@@ -24,17 +24,17 @@ function DisplayCard({
   return (
     <div
       className={cn(
-        "relative flex h-36 w-[22rem] -skew-y-[8deg] select-none flex-col justify-between rounded-xl border bg-zinc-900/80 backdrop-blur-sm px-5 py-4 transition-all duration-700 after:absolute after:-right-1 after:top-[-5%] after:h-[110%] after:w-[20rem] after:bg-gradient-to-l after:from-black after:to-transparent after:content-[''] hover:border-white/20 hover:bg-zinc-800/90 [&>*]:flex [&>*]:items-center [&>*]:gap-2 border-zinc-800/80 text-white",
+        "relative flex h-36 w-[22rem] -skew-y-[8deg] select-none flex-col justify-between rounded-xl glass-panel px-5 py-4 transition-all duration-700 after:absolute after:-right-1 after:top-[-5%] after:h-[110%] after:w-[20rem] after:bg-gradient-to-l after:from-slate-950 after:to-transparent after:content-[''] [&>*]:flex [&>*]:items-center [&>*]:gap-2 text-white",
         className
       )}
     >
       <div>
-        <span className="relative inline-flex items-center justify-center w-7 h-7 rounded-lg bg-white/[0.06] border border-white/10">
+        <span className="relative inline-flex items-center justify-center w-7 h-7 rounded-lg glass-pill">
           {icon}
         </span>
         <p className={cn("text-base font-semibold", titleClassName)}>{title}</p>
       </div>
-      <p className="text-sm text-zinc-400 whitespace-normal line-clamp-2 leading-relaxed">{description}</p>
+      <p className="text-sm text-slate-400 whitespace-normal line-clamp-2 leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -84,11 +84,11 @@ export function FeatureCards() {
   }));
 
   return (
-    <section className="py-24 md:py-32 border-t border-zinc-900 px-8 md:px-28 bg-black font-sans overflow-hidden">
+    <section className="py-24 md:py-32 border-t border-slate-900 px-8 md:px-28 bg-[#05070a] font-sans overflow-hidden">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-8">
         {/* Text Content */}
         <div className="flex-1 w-full text-left">
-          <motion.span {...fadeUp(0)} className="text-xs tracking-[3px] uppercase text-zinc-500 block mb-6">
+          <motion.span {...fadeUp(0)} className="text-xs tracking-[3px] uppercase text-slate-500 block mb-6">
             COMPREHENSIVE COVERAGE
           </motion.span>
           <motion.h2 {...fadeUp(0.1)} className="text-4xl md:text-5xl lg:text-6xl font-medium mb-8 leading-tight text-white tracking-[-1px]">
@@ -98,12 +98,12 @@ export function FeatureCards() {
             </span>
             , secured.
           </motion.h2>
-          <motion.p {...fadeUp(0.2)} className="text-lg text-zinc-400 mb-10 max-w-xl leading-relaxed">
+          <motion.p {...fadeUp(0.2)} className="text-lg text-slate-400 mb-10 max-w-xl leading-relaxed">
             From the core network to the application edge, SentinelAI provides a unified defense matrix that continuously simulates attacks, discovers vulnerabilities, and remediates them automatically.
           </motion.p>
           <motion.button
             {...fadeUp(0.3)}
-            className="bg-white text-black font-semibold rounded-full px-8 py-3.5 text-sm tracking-wide hover:shadow-lg hover:shadow-white/10 transition-all hover:scale-[1.03]"
+            className="bg-blue-600 text-white font-semibold rounded-full px-8 py-3.5 text-sm tracking-wide hover:shadow-lg hover:shadow-blue-500/20 transition-all hover:scale-[1.03]"
           >
             Explore Capabilities
           </motion.button>
